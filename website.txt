@@ -1,0 +1,3 @@
+https://dashboard.render.com/login
+https://app.netlify.com/
+https://github.com/login
