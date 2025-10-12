@@ -1,0 +1,271 @@
+/* Transiciones de fondo fluidas */
+.body-background {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  transition: background-image 2s ease-in-out !important;
+}
+
+.body-transitioning {
+  transition: background-image 2s ease-in-out !important;
+}
+
+/* Contenedor principal */
+.app-container {
+  position: relative;
+  min-height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  overflow-x: hidden;
+}
+
+.app-container::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 2s ease-in-out;
+}
+
+.main-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Hero Section Mejorada */
+.hero-content {
+  padding: 4rem 0;
+  animation: fadeInUp 1s ease-out;
+}
+
+.hero-title {
+  font-size: 4rem;
+  font-weight: 800;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+  animation: slideInDown 1s ease-out;
+}
+
+.hero-subtitle {
+  font-size: 1.4rem;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  animation: fadeIn 1.2s ease-out 0.3s both;
+}
+
+.brand-highlight {
+  color: #4ecdc4;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+}
+
+.text-accent {
+  color: #4ecdc4 !important;
+  text-shadow: 0 0 15px rgba(78, 205, 196, 0.7);
+}
+
+/* Botones mejorados */
+.hero-buttons {
+  animation: fadeIn 1.5s ease-out 0.6s both;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2127e6, #4ecdc4);
+  border: none;
+  padding: 12px 30px;
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(33, 39, 230, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(33, 39, 230, 0.6);
+  background: linear-gradient(135deg, #1a20c7, #3aa9a3);
+}
+
+.btn-outline-light {
+  border: 2px solid white;
+  padding: 12px 30px;
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-light:hover {
+  background: white;
+  color: #212529;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+/* Feature Cards */
+.feature-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  animation: fadeInUp 1s ease-out 0.8s both;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* Footer */
+.footer-home {
+  background: rgba(0, 0, 0, 0.8);
+  padding: 2rem 0;
+  margin-top: 4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.social-link:hover {
+  background: #2127e6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 39, 230, 0.4);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efectos de carga */
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ecdc4;
+  animation: pulse 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .hero-buttons .btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .hero-buttons .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Mejora de rendimiento para transiciones */
+@media (prefers-reduced-motion: reduce) {
+  .body-background,
+  .body-transitioning,
+  .app-container::before,
+  .btn-primary,
+  .btn-outline-light,
+  .feature-card,
+  .social-link {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,175 @@
+:root {
+  --primary-color: #2127e6;
+  --secondary-color: #ff6b6b;
+  --accent-color: #4ecdc4;
+  --dark-color: #292b2c;
+  --light-color: #f7f9f9;
+}
+
+.form-card {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  background-color: rgba(41, 43, 44, 0.95);
+  color: var(--light-color);
+}
+
+.card-header {
+  border-bottom: 3px solid var(--accent-color);
+  background: linear-gradient(
+    145deg,
+    rgba(33, 39, 230, 0.1),
+    rgba(78, 205, 196, 0.1)
+  );
+}
+
+.form-control {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: var(--light-color);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  padding: 12px 15px;
+}
+
+.form-control:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent-color);
+  color: var(--light-color);
+  box-shadow: 0 0 0 0.2rem rgba(78, 205, 196, 0.25);
+}
+
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-control.is-invalid {
+  border-color: var(--secondary-color);
+  background-color: rgba(255, 107, 107, 0.1);
+}
+
+.form-label {
+  color: var(--accent-color);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.form-text {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 0.9rem;
+}
+
+.input-group-text {
+  background-color: var(--accent-color);
+  border: 2px solid var(--accent-color);
+  color: var(--dark-color);
+  font-weight: bold;
+  padding: 12px 15px;
+}
+
+.btn-warning {
+  background: linear-gradient(145deg, #ffc107, #e0a800);
+  border: none;
+  color: #212529;
+  font-weight: 600;
+  padding: 12px 30px;
+  transition: all 0.3s;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.btn-warning:hover {
+  background: linear-gradient(145deg, #e0a800, #d39e00);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+}
+
+.btn-secondary {
+  background: linear-gradient(145deg, #6c757d, #5a6268);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 12px 30px;
+  transition: all 0.3s;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(145deg, #5a6268, #545b62);
+  transform: translateY(-2px);
+}
+
+.text-accent {
+  color: var(--accent-color) !important;
+}
+
+.bg-accent {
+  background-color: var(--accent-color) !important;
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid #dc3545;
+  color: #f8d7da;
+  border-radius: 10px;
+  padding: 15px 20px;
+}
+
+.invalid-feedback {
+  color: #ff6b6b;
+  font-weight: 500;
+  display: block;
+  margin-top: 5px;
+}
+
+.img-thumbnail {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--accent-color);
+  border-radius: 10px;
+  padding: 5px;
+}
+
+/* Estilos para validación */
+.needs-validation .form-control:invalid {
+  border-color: var(--secondary-color);
+}
+
+.needs-validation .form-control:valid {
+  border-color: var(--accent-color);
+}
+
+/* Iconos específicos para vitaminas */
+.fa-capsules {
+  color: var(--accent-color);
+}
+
+.fa-heartbeat {
+  color: #ff6b6b;
+}
+
+/* Efectos especiales para vitaminas */
+.vitamin-glow {
+  text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+}
+
+@media (max-width: 768px) {
+  .card-body {
+    padding: 2rem !important;
+  }
+
+  .d-md-flex {
+    flex-direction: column;
+  }
+
+  .me-md-2 {
+    margin-right: 0 !important;
+    margin-bottom: 1rem;
+  }
+
+  .form-control-lg {
+    font-size: 1rem;
+    padding: 10px 12px;
+  }
+}

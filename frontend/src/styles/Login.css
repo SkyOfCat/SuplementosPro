@@ -1,0 +1,138 @@
+/* Login.css */
+:root {
+  --primary-color: #2127e6;
+  --secondary-color: #ff6b6b;
+  --accent-color: #4ecdc4;
+  --dark-color: #292b2c;
+  --light-color: #f7f9f9;
+}
+
+.login-container {
+  background-color: var(--primary-color);
+  background-image: url("/src/assets/kingWhey.jpg");
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: overlay;
+  background-color: rgba(33, 39, 230, 0.85);
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-card {
+  background-color: rgba(41, 43, 44, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-header i {
+  color: var(--accent-color);
+}
+
+.brand-header h2 {
+  font-weight: 700;
+  color: var(--light-color);
+  margin-bottom: 5px;
+}
+
+.brand-header p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.form-control {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--light-color);
+  padding: 12px 15px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.form-control:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent-color);
+  color: var(--light-color);
+  box-shadow: 0 0 0 0.25rem rgba(78, 205, 196, 0.25);
+}
+
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-label {
+  color: var(--light-color);
+  font-weight: 500;
+}
+
+.btn-info {
+  background-color: var(--accent-color);
+  border: none;
+  color: var(--dark-color);
+  font-weight: 600;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.btn-info:hover {
+  background-color: #3aa9a3;
+  transform: translateY(-2px);
+}
+
+.btn-outline-warning {
+  border-color: #ffc107;
+  color: #ffc107;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.btn-outline-warning:hover {
+  background-color: #ffc107;
+  color: var(--dark-color);
+  transform: translateY(-2px);
+}
+
+.btn-outline-success {
+  border-color: #198754;
+  color: #198754;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.btn-outline-success:hover {
+  background-color: #198754;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.alert-danger {
+  background-color: rgba(255, 107, 107, 0.2);
+  color: var(--secondary-color);
+  border: none;
+  border-radius: 8px;
+}
+
+.login-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Estilos para estados de carga */
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .login-card {
+    margin: 20px;
+    width: auto !important;
+  }
+}
