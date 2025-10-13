@@ -15,6 +15,9 @@ function Productos() {
   const [imagenesCargadas, setImagenesCargadas] = useState({});
   const [erroresImagen, setErroresImagen] = useState({});
 
+  // URL base desde variables de entorno
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
   useEffect(() => {
     obtenerProductos();
   }, []);
@@ -32,11 +35,11 @@ function Productos() {
         resAminoacidos,
         resVitaminas,
       ] = await Promise.all([
-        fetch("http://localhost:8000/api/proteinas/"),
-        fetch("http://localhost:8000/api/snacks/"),
-        fetch("http://localhost:8000/api/creatinas/"),
-        fetch("http://localhost:8000/api/aminoacidos/"),
-        fetch("http://localhost:8000/api/vitaminas/"),
+        fetch(`${API_BASE_URL}/api/proteinas/`),
+        fetch(`${API_BASE_URL}/api/snacks/`),
+        fetch(`${API_BASE_URL}/api/creatinas/`),
+        fetch(`${API_BASE_URL}/api/aminoacidos/`),
+        fetch(`${API_BASE_URL}/api/vitaminas/`),
       ]);
 
       if (
@@ -106,11 +109,11 @@ function Productos() {
 
     // Si empieza con / (ruta absoluta del servidor)
     if (imagenPath.startsWith("/")) {
-      return `http://localhost:8000${imagenPath}`;
+      return `${API_BASE_URL}${imagenPath}`;
     }
 
     // Si es solo el nombre del archivo
-    return `http://localhost:8000/media/${imagenPath}`;
+    return `${API_BASE_URL}/media/${imagenPath}`;
   };
 
   const aplicarFiltros = () => {
