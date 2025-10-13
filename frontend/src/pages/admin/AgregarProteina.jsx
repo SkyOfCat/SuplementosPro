@@ -4,6 +4,7 @@ import "../../styles/admin/AgregarProteina.css";
 
 const AgregarProteina = () => {
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   const [formData, setFormData] = React.useState({
     nombre: "",
@@ -93,7 +94,8 @@ const AgregarProteina = () => {
     });
 
     try {
-      const response = await fetch("http://localhost:8000/api/proteinas/", {
+      // ✅ URL CORREGIDA - usa API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/api/proteinas/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
