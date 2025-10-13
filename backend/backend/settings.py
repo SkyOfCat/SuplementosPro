@@ -180,5 +180,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CORS_ALLOWED_ORIGINS = [
     "https://suplementos-pro-shop.netlify.app",
     "http://localhost:3000",
+    "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True 
+CORS_ALLOW_ALL_ORIGINS = True
