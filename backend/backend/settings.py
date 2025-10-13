@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -15,7 +16,7 @@ SECRET_KEY = 'django-insecure-rn^wf8k^r*b=cnond)l5f#=&1ho_eos4_lu)ptlz_&dw^6j2qk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['https://suplementospro.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -103,17 +104,25 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'SuplementosPro',        # Nombre de la base de datos
-        'USER': 'Kotaro',               # Usuario de PostgreSQL
-        'PASSWORD': 'jmapm12a@',        # Contraseña
-        'HOST': 'localhost',                # O la IP de tu servidor
-        'PORT': '5432',                     # Puerto por defecto de PostgreSQL
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-}
-
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'SuplementosPro'),
+            'USER': os.getenv('DB_USER', 'Kotaro'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'jmapm12a@'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -150,7 +159,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -160,5 +170,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOWED_ORIGINS = [
+    "https://suplementos-pro-shop.netlify.app",
+    "http://localhost:3000",
+]
 CORS_ALLOW_CREDENTIALS = True 
