@@ -114,19 +114,28 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
-            #'ENGINE': 'django.db.backends.postgresql',
-            #'NAME': os.getenv('DB_NAME', 'suplementospro'),
-            #'USER': os.getenv('DB_USER', 'kotaro'),
-            #'PASSWORD': os.getenv('DB_PASSWORD', 'jmapm12a@'),
-            #'HOST': os.getenv('DB_HOST', 'localhost'),
-            #'PORT': os.getenv('DB_PORT', '5432'),
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # Solo para desarrollo local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'suplementospro'),
+            'USER': os.getenv('DB_USER', 'kotaro'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'jmapm12a@'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
