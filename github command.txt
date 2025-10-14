@@ -5,7 +5,7 @@ git add .
 git commit -m "Initial commit"
 
 # Conecta con el nuevo repositorio remoto
-git remote add origin https://github.com/SkyOfCat/suplementospro.git
+git remote add origin https://github.com/SkyOfCat/SuplementosPro.git
 
 # Sube todo
 git push -u origin main
