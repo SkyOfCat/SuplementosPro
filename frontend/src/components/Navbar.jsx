@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
@@ -20,25 +21,67 @@ function Navbar() {
         return;
       }
 
-      const res = await fetch("http://localhost:8000/api/usuario/actual/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      // ✅ URL usando la configuración centralizada
+      const res = await fetch(buildUrl(API_CONFIG.ENDPOINTS.USUARIO_ACTUAL), {
+        headers: getAuthHeadersJSON(),
       });
 
       if (res.ok) {
         const data = await res.json();
         setUsuario(data);
+      } else if (res.status === 401) {
+        // Token expirado, intentar refresh
+        const nuevoToken = await refrescarToken();
+        if (nuevoToken) {
+          // Reintentar con nuevo token
+          await obtenerUsuario();
+        } else {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          setError("Sesión expirada");
+        }
       } else {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
         setError("Error al cargar usuario");
       }
     } catch (err) {
+      console.error("Error en Navbar:", err);
       setError("Error de conexión");
     } finally {
       setCargando(false);
+    }
+  };
+
+  const refrescarToken = async () => {
+    try {
+      const refreshToken = localStorage.getItem("refresh_token");
+
+      if (!refreshToken) {
+        return null;
+      }
+
+      const response = await fetch(
+        buildUrl(API_CONFIG.ENDPOINTS.TOKEN_REFRESH),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            refresh: refreshToken,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("access_token", data.access);
+        return data.access;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("Error al refrescar token:", error);
+      return null;
     }
   };
 
@@ -74,6 +117,7 @@ function Navbar() {
               className="alert alert-warning alert-dismissible fade show m-2"
               role="alert"
             >
+              <i className="fas fa-exclamation-triangle me-2"></i>
               {error}
               <button
                 type="button"
@@ -138,7 +182,13 @@ function Navbar() {
           <div className="d-flex align-items-center">
             {cargando ? (
               <div className="text-light me-3">
-                <i className="fas fa-spinner fa-spin me-1"></i> Cargando...
+                <div
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                >
+                  <span className="visually-hidden">Cargando...</span>
+                </div>
+                Cargando...
               </div>
             ) : usuario ? (
               <div className="dropdown">
