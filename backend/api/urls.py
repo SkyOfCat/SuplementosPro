@@ -3,14 +3,14 @@ from rest_framework import routers
 from . import views
 from .views import ProteinaViewSet, SnackViewSet, CarritoViewSet, CreatinaViewSet, AminoacidoViewSet, VitaminaViewSet
 
-route = routers.DefaultRouter()
-route.register(r'proteinas', ProteinaViewSet, basename='proteina')
-route.register(r'snacks', SnackViewSet, basename='snack')
-route.register(r'creatinas', CreatinaViewSet, basename='creatina')
-route.register(r'aminoacidos', AminoacidoViewSet, basename='aminoacido')
-route.register(r'vitaminas', VitaminaViewSet, basename='vitamina')
-route.register(r'carrito', CarritoViewSet, basename='carrito')
-route.register(r'usuarios', views.UsuarioViewSet, basename='usuario')
+router = routers.DefaultRouter()
+router.register(r'proteinas', ProteinaViewSet, basename='proteina')
+router.register(r'snacks', SnackViewSet, basename='snack')
+router.register(r'creatinas', CreatinaViewSet, basename='creatina')
+router.register(r'aminoacidos', AminoacidoViewSet, basename='aminoacido')
+router.register(r'vitaminas', VitaminaViewSet, basename='vitamina')
+router.register(r'carrito', CarritoViewSet, basename='carrito')
+router.register(r'usuarios', views.UsuarioViewSet, basename='usuario')
 
 
 urlpatterns = [
@@ -19,5 +19,5 @@ urlpatterns = [
     # otras rutas... # si crea vistas en la api, solo ponga el nombre de la vista ej: registro/
     
     # route #
-    path('', include(route.urls)),
+    path('', include(router.urls)),
 ]
