@@ -494,14 +494,3 @@ class CarritoViewSet(viewsets.ViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # --- --- --- --- --- #
-
-# --- Router --- #
-
-__all__ = [
-    'get_usuario_actual',
-    'registro_usuario', 
-    'UsuarioViewSet',
-    'ProteinaviewSet',
-    'SnackViewSet',
-]
-# --- --- --- --- --- #
