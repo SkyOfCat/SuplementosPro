@@ -1,6 +1,11 @@
-git init
+# Agrega todos los archivos
 git add .
+
+# Haz el primer commit
 git commit -m "Initial commit"
+
+# Conecta con el nuevo repositorio remoto
 git remote add origin https://github.com/SkyOfCat/suplementospro.git
-git branch -M main
+
+# Sube todo
 git push -u origin main
