@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../config/api";
 import "../styles/Login.css";
 
 function Login() {
@@ -7,18 +8,27 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    // Validación básica
+    if (!email || !password) {
+      setError("❌ Por favor completa todos los campos");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/token/", {
+      // ✅ URL usando la configuración centralizada
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.TOKEN), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email,
+          email: email.trim(),
           password: password,
         }),
       });
@@ -26,22 +36,36 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
+        // Guardar tokens en localStorage
         localStorage.setItem("access_token", data.access);
         localStorage.setItem("refresh_token", data.refresh);
 
+        // Obtener y guardar datos del usuario
         if (data.user) {
           localStorage.setItem("user_data", JSON.stringify(data.user));
+          console.log("✅ Usuario autenticado:", data.user);
         } else {
           await obtenerDatosUsuario(data.access);
         }
 
+        setError("");
         alert("✅ Inicio de sesión exitoso");
-        window.location.href = "/";
+
+        // Redirigir usando navigate en lugar de window.location
+        navigate("/");
       } else {
-        setError(data.detail || data.error || "Error al iniciar sesión");
+        // Manejar errores específicos del backend
+        if (response.status === 401) {
+          setError("❌ Email o contraseña incorrectos");
+        } else if (response.status === 400) {
+          setError("❌ Datos de inicio de sesión inválidos");
+        } else {
+          setError(data.detail || data.error || "❌ Error al iniciar sesión");
+        }
       }
     } catch (err) {
-      setError("Error de conexión con el servidor");
+      console.error("Error de conexión:", err);
+      setError("⚠️ Error de conexión con el servidor");
     } finally {
       setLoading(false);
     }
@@ -49,20 +73,23 @@ function Login() {
 
   const obtenerDatosUsuario = async (token) => {
     try {
+      // ✅ URL usando la configuración centralizada
       const response = await fetch(
-        "http://127.0.0.1:8000/api/usuario/actual/",
+        buildUrl(API_CONFIG.ENDPOINTS.USUARIO_ACTUAL),
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeadersJSON(),
         }
       );
 
       if (response.ok) {
         const userData = await response.json();
         localStorage.setItem("user_data", JSON.stringify(userData));
+        console.log("✅ Datos de usuario obtenidos:", userData);
+      } else if (response.status === 401) {
+        console.error("Token inválido al obtener datos de usuario");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
       }
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
@@ -70,11 +97,16 @@ function Login() {
   };
 
   const handleRecoverPassword = () => {
-    // Aquí puedes implementar la lógica para recuperar contraseña
-    // Por ejemplo, redirigir a una página de recuperación o mostrar un modal
-    alert("Función de recuperar contraseña - Próximamente");
-    // O redirigir a una página de recuperación:
-    // window.location.href = "/recuperar-contrasena";
+    // Función para recuperar contraseña (puede implementarse después)
+    alert("🔒 Función de recuperar contraseña - Próximamente");
+    // Para implementar después:
+    // navigate("/recuperar-contrasena");
+  };
+
+  const handleDemoLogin = () => {
+    // Credenciales de demo (opcional - solo para desarrollo)
+    setEmail("demo@suplementospro.com");
+    setPassword("demopassword123");
   };
 
   return (
@@ -85,11 +117,16 @@ function Login() {
       >
         <div className="brand-header text-center mb-4">
           <i className="fas fa-dumbbell fa-2x text-info mb-3"></i>
-          <h2>SuplementosPro</h2>
+          <h2 className="fw-bold">SuplementosPro</h2>
           <p className="text-muted">Inicia sesión en tu cuenta</p>
         </div>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && (
+          <div className="alert alert-danger d-flex align-items-center">
+            <i className="fas fa-exclamation-triangle me-2"></i>
+            <span>{error}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -121,6 +158,7 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
+              minLength="6"
             />
           </div>
 
@@ -146,6 +184,18 @@ function Login() {
             )}
           </button>
 
+          {/* Botón de demo (solo para desarrollo) */}
+          {process.env.NODE_ENV === "development" && (
+            <button
+              type="button"
+              className="btn btn-outline-light w-100 mb-3"
+              onClick={handleDemoLogin}
+              disabled={loading}
+            >
+              <i className="fas fa-magic me-2"></i> Usar Credenciales Demo
+            </button>
+          )}
+
           {/* Botón de recuperar contraseña */}
           <button
             type="button"
@@ -157,15 +207,32 @@ function Login() {
           </button>
 
           {/* Botón de registrarse */}
-          <Link to="/registro" className="btn btn-outline-success w-100">
+          <Link
+            to="/registro"
+            className="btn btn-outline-success w-100"
+            onClick={(e) => loading && e.preventDefault()}
+          >
             <i className="fas fa-user-plus me-2"></i> Crear Cuenta
           </Link>
         </form>
 
-        <div className="login-footer text-center mt-4 pt-3 border-top">
+        <div className="login-footer text-center mt-4 pt-3 border-top border-secondary">
+          <p className="text-muted small mb-2">
+            <i className="fas fa-shield-alt me-1"></i>
+            Tus datos están protegidos
+          </p>
           <p className="text-muted small">
             ¿Necesitas ayuda?{" "}
-            <a href="#" className="text-info text-decoration-none">
+            <a
+              href="#"
+              className="text-info text-decoration-none"
+              onClick={(e) => {
+                e.preventDefault();
+                alert(
+                  "📞 Soporte: +56 9 1234 5678\n✉️ Email: soporte@suplementospro.com"
+                );
+              }}
+            >
               Contáctanos
             </a>
           </p>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../../config/api";
 import "../../styles/admin/GestionProductos.css";
 
 const GestionProductos = () => {
@@ -21,11 +22,9 @@ const GestionProductos = () => {
           return;
         }
 
-        const res = await fetch("http://localhost:8000/api/usuario/actual/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        // ✅ URL usando la configuración centralizada
+        const res = await fetch(buildUrl(API_CONFIG.ENDPOINTS.USUARIO_ACTUAL), {
+          headers: getAuthHeadersJSON(),
         });
 
         if (res.ok) {
@@ -51,7 +50,7 @@ const GestionProductos = () => {
       try {
         const token = localStorage.getItem("access_token");
 
-        // Obtener todos los tipos de productos por separado
+        // ✅ URLs usando la configuración centralizada
         const [
           resProteinas,
           resSnacks,
@@ -59,35 +58,20 @@ const GestionProductos = () => {
           resAminoacidos,
           resVitaminas,
         ] = await Promise.all([
-          fetch("http://localhost:8000/api/proteinas/", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+          fetch(buildUrl(API_CONFIG.ENDPOINTS.PROTEINAS), {
+            headers: getAuthHeadersJSON(),
           }),
-          fetch("http://localhost:8000/api/snacks/", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+          fetch(buildUrl(API_CONFIG.ENDPOINTS.SNACKS), {
+            headers: getAuthHeadersJSON(),
           }),
-          fetch("http://localhost:8000/api/creatinas/", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+          fetch(buildUrl(API_CONFIG.ENDPOINTS.CREATINAS), {
+            headers: getAuthHeadersJSON(),
           }),
-          fetch("http://localhost:8000/api/aminoacidos/", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+          fetch(buildUrl(API_CONFIG.ENDPOINTS.AMINOACIDOS), {
+            headers: getAuthHeadersJSON(),
           }),
-          fetch("http://localhost:8000/api/vitaminas/", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+          fetch(buildUrl(API_CONFIG.ENDPOINTS.VITAMINAS), {
+            headers: getAuthHeadersJSON(),
           }),
         ]);
 
@@ -138,22 +122,32 @@ const GestionProductos = () => {
       const token = localStorage.getItem("access_token");
       let endpoint = "";
 
-      // Determinar el endpoint según el tipo de producto
+      // ✅ Determinar el endpoint usando la configuración centralizada
       switch (productoAEliminar.tipo) {
         case "Proteina":
-          endpoint = `http://localhost:8000/api/proteinas/${productoAEliminar.id}/`;
+          endpoint = buildUrl(
+            `${API_CONFIG.ENDPOINTS.PROTEINAS}${productoAEliminar.id}/`
+          );
           break;
         case "Snack":
-          endpoint = `http://localhost:8000/api/snacks/${productoAEliminar.id}/`;
+          endpoint = buildUrl(
+            `${API_CONFIG.ENDPOINTS.SNACKS}${productoAEliminar.id}/`
+          );
           break;
         case "Creatina":
-          endpoint = `http://localhost:8000/api/creatinas/${productoAEliminar.id}/`;
+          endpoint = buildUrl(
+            `${API_CONFIG.ENDPOINTS.CREATINAS}${productoAEliminar.id}/`
+          );
           break;
         case "Aminoacido":
-          endpoint = `http://localhost:8000/api/aminoacidos/${productoAEliminar.id}/`;
+          endpoint = buildUrl(
+            `${API_CONFIG.ENDPOINTS.AMINOACIDOS}${productoAEliminar.id}/`
+          );
           break;
         case "Vitamina":
-          endpoint = `http://localhost:8000/api/vitaminas/${productoAEliminar.id}/`;
+          endpoint = buildUrl(
+            `${API_CONFIG.ENDPOINTS.VITAMINAS}${productoAEliminar.id}/`
+          );
           break;
         default:
           console.error("Tipo de producto no válido");
@@ -162,24 +156,28 @@ const GestionProductos = () => {
 
       const res = await fetch(endpoint, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeadersJSON(),
       });
 
       if (res.ok) {
         setProductos(productos.filter((p) => p.id !== productoAEliminar.id));
         setShowDeleteModal(false);
         setProductoAEliminar(null);
-        alert("Producto eliminado exitosamente");
+        alert("✅ Producto eliminado exitosamente");
+      } else if (res.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        alert("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
+        navigate("/login");
+      } else if (res.status === 403) {
+        alert("❌ No tienes permisos para realizar esta acción.");
       } else {
         console.error("Error eliminando producto:", res.status);
-        alert("Error al eliminar el producto");
+        alert("❌ Error al eliminar el producto");
       }
     } catch (error) {
       console.error("Error eliminando producto:", error);
-      alert("Error al eliminar el producto");
+      alert("⚠️ Error de conexión al eliminar el producto");
     }
   };
 
@@ -232,10 +230,10 @@ const GestionProductos = () => {
     }
 
     if (imagenPath.startsWith("/")) {
-      return `http://localhost:8000${imagenPath}`;
+      return `${API_CONFIG.BASE_URL}${imagenPath}`;
     }
 
-    return `http://localhost:8000/media/${imagenPath}`;
+    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
   };
 
   // Función para manejar error en carga de imagen
@@ -265,7 +263,7 @@ const GestionProductos = () => {
     }
   };
 
-  // Función para obtener la ruta de edición según el tipo de producto - CORREGIDO
+  // Función para obtener la ruta de edición según el tipo de producto
   const getEditRoute = (producto) => {
     switch (producto.tipo_producto) {
       case "Proteina":
@@ -276,7 +274,7 @@ const GestionProductos = () => {
         return `/admin/editar-creatina/${producto.id}`;
       case "Aminoacido":
         return `/admin/editar-aminoacido/${producto.id}`;
-      case "Vitamina": // CORREGIDO: era "Vitamina_salud"
+      case "Vitamina":
         return `/admin/editar-vitamina/${producto.id}`;
       default:
         return "#";
@@ -533,7 +531,7 @@ const GestionProductos = () => {
           </div>
         </div>
 
-        {/* Modal de Confirmación para Eliminar - FUERA DE LA TABLA */}
+        {/* Modal de Confirmación para Eliminar */}
         {showDeleteModal && productoAEliminar && (
           <div className="modal-backdrop show">
             <div className="modal d-block">

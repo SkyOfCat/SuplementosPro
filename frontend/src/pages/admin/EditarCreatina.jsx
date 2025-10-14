@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  API_CONFIG,
+  getAuthHeadersFormData,
+  getAuthHeadersJSON,
+  buildUrl,
+} from "../../config/api";
 import "../../styles/admin/EditarCreatina.css";
 
 const EditarCreatina = () => {
@@ -12,10 +18,13 @@ const EditarCreatina = () => {
     stock: "",
     fecha_vencimiento: "",
     imagen: null,
+    imagen_nutricional: null,
   });
 
   const [currentImage, setCurrentImage] = useState("");
+  const [currentImageNutricional, setCurrentImageNutricional] = useState("");
   const [imagePreview, setImagePreview] = useState("");
+  const [imageNutricionalPreview, setImageNutricionalPreview] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(false);
   const [cargandoProducto, setCargandoProducto] = useState(true);
@@ -26,15 +35,11 @@ const EditarCreatina = () => {
 
   const cargarCreatina = async () => {
     try {
-      const token = localStorage.getItem("access_token");
-
+      // ✅ URL usando la configuración centralizada
       const response = await fetch(
-        `http://localhost:8000/api/creatinas/${id}/`,
+        buildUrl(`${API_CONFIG.ENDPOINTS.CREATINAS}${id}/`),
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeadersJSON(),
         }
       );
 
@@ -46,11 +51,23 @@ const EditarCreatina = () => {
           stock: data.stock || "",
           fecha_vencimiento: data.fecha_vencimiento || "",
           imagen: null,
+          imagen_nutricional: null,
         });
 
         if (data.imagen) {
           setCurrentImage(getImagenUrl(data.imagen));
         }
+
+        if (data.imagen_nutricional) {
+          setCurrentImageNutricional(getImagenUrl(data.imagen_nutricional));
+        }
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
+        setTimeout(() => navigate("/login"), 2000);
+      } else if (response.status === 404) {
+        setMensaje("❌ Creatina no encontrada");
       } else {
         setMensaje("❌ Error al cargar la creatina");
       }
@@ -70,10 +87,10 @@ const EditarCreatina = () => {
     }
 
     if (imagenPath.startsWith("/")) {
-      return `http://localhost:8000${imagenPath}`;
+      return `${API_CONFIG.BASE_URL}${imagenPath}`;
     }
 
-    return `http://localhost:8000/media/${imagenPath}`;
+    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
   };
 
   const handleChange = (e) => {
@@ -95,6 +112,22 @@ const EditarCreatina = () => {
       } else {
         setImagePreview("");
       }
+    } else if (name === "imagen_nutricional") {
+      const file = files[0];
+      setFormData((prev) => ({
+        ...prev,
+        imagen_nutricional: file,
+      }));
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImageNutricionalPreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setImageNutricionalPreview("");
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -108,6 +141,18 @@ const EditarCreatina = () => {
     setLoading(true);
     setMensaje("");
 
+    // Validación básica
+    const camposRequeridos = ["nombre", "precio", "stock", "fecha_vencimiento"];
+    const camposFaltantes = camposRequeridos.filter(
+      (campo) => !formData[campo]
+    );
+
+    if (camposFaltantes.length > 0) {
+      setMensaje("❌ Por favor completa todos los campos requeridos");
+      setLoading(false);
+      return;
+    }
+
     const token = localStorage.getItem("access_token");
 
     if (!token) {
@@ -120,7 +165,7 @@ const EditarCreatina = () => {
     // Crear objeto FormData para enviar imagen y texto
     const data = new FormData();
     data.append("nombre", formData.nombre.trim());
-    data.append("precio", parseInt(formData.precio));
+    data.append("precio", parseFloat(formData.precio));
     data.append("stock", parseInt(formData.stock));
     data.append("fecha_vencimiento", formData.fecha_vencimiento);
     data.append("tipo_producto", "Creatina");
@@ -130,14 +175,17 @@ const EditarCreatina = () => {
       data.append("imagen", formData.imagen);
     }
 
+    if (formData.imagen_nutricional) {
+      data.append("imagen_nutricional", formData.imagen_nutricional);
+    }
+
     try {
+      // ✅ URL usando la configuración centralizada
       const response = await fetch(
-        `http://localhost:8000/api/creatinas/${id}/`,
+        buildUrl(`${API_CONFIG.ENDPOINTS.CREATINAS}${id}/`),
         {
           method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeadersFormData(),
           body: data,
         }
       );
@@ -154,11 +202,19 @@ const EditarCreatina = () => {
         setMensaje("❌ No tiene permisos de administrador para esta acción.");
       } else {
         const errorData = await response.json();
-        console.error(errorData);
-        setMensaje("❌ Error al actualizar la creatina. Revisa los campos.");
+        console.error("Error del servidor:", errorData);
+
+        // Manejar errores específicos del backend
+        if (errorData.detail) {
+          setMensaje(`❌ ${errorData.detail}`);
+        } else if (errorData.non_field_errors) {
+          setMensaje(`❌ ${errorData.non_field_errors.join(", ")}`);
+        } else {
+          setMensaje("❌ Error al actualizar la creatina. Revisa los campos.");
+        }
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error:", error);
       setMensaje("⚠️ Error de conexión con el servidor.");
     } finally {
       setLoading(false);
@@ -166,7 +222,13 @@ const EditarCreatina = () => {
   };
 
   const handleCancel = () => {
-    navigate("/admin/productos");
+    if (
+      window.confirm(
+        "¿Estás seguro de que deseas cancelar? Los cambios no guardados se perderán."
+      )
+    ) {
+      navigate("/admin/productos");
+    }
   };
 
   const getFieldIcon = (fieldName) => {
@@ -176,6 +238,7 @@ const EditarCreatina = () => {
       stock: "fas fa-boxes",
       fecha_vencimiento: "fas fa-calendar-alt",
       imagen: "fas fa-image",
+      imagen_nutricional: "fas fa-chart-bar",
     };
     return icons[fieldName] || "fas fa-edit";
   };
@@ -211,6 +274,7 @@ const EditarCreatina = () => {
             onChange={handleChange}
             className="form-control file-input"
             accept="image/*"
+            disabled={loading}
           />
         ) : (
           <input
@@ -224,6 +288,7 @@ const EditarCreatina = () => {
             required={required}
             min={min}
             step={step}
+            disabled={loading}
           />
         )}
 
@@ -269,6 +334,12 @@ const EditarCreatina = () => {
       type: "file",
       helpText: "Formatos: JPG, PNG, WEBP (opcional)",
     },
+    {
+      name: "imagen_nutricional",
+      label: "Imagen Nutricional",
+      type: "file",
+      helpText: "Tabla de información nutricional (opcional)",
+    },
   ];
 
   if (cargandoProducto) {
@@ -281,6 +352,7 @@ const EditarCreatina = () => {
           <div className="spinner-border text-accent" role="status">
             <span className="visually-hidden">Cargando...</span>
           </div>
+          <p className="ms-3 mb-0">Cargando creatina...</p>
         </div>
       </div>
     );
@@ -300,6 +372,35 @@ const EditarCreatina = () => {
               </p>
             </div>
 
+            {/* Mensaje general */}
+            {mensaje && (
+              <div
+                className={`alert ${
+                  mensaje.includes("✅")
+                    ? "alert-success"
+                    : mensaje.includes("❌")
+                    ? "alert-danger"
+                    : "alert-warning"
+                } alert-dismissible fade show`}
+              >
+                <i
+                  className={`fas ${
+                    mensaje.includes("✅")
+                      ? "fa-check-circle"
+                      : mensaje.includes("❌")
+                      ? "fa-exclamation-circle"
+                      : "fa-exclamation-triangle"
+                  } me-2`}
+                ></i>
+                {mensaje}
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setMensaje("")}
+                ></button>
+              </div>
+            )}
+
             <form
               onSubmit={handleSubmit}
               className="product-form"
@@ -309,18 +410,30 @@ const EditarCreatina = () => {
                 {formFields.map((field) => renderFormField(field))}
               </div>
 
-              {/* Imagen actual */}
+              {/* Imagen actual del producto */}
               {currentImage && (
                 <div className="form-group full-width">
                   <label className="form-label">
-                    <i className="fas fa-image me-1"></i>Imagen Actual
+                    <i className="fas fa-image me-1"></i>Imagen Actual del
+                    Producto
                   </label>
                   <div className="current-image-container">
                     <img
                       src={currentImage}
-                      alt="Imagen actual"
+                      alt="Imagen actual del producto"
                       className="current-image"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "block";
+                      }}
                     />
+                    <div
+                      className="no-image-placeholder"
+                      style={{ display: "none" }}
+                    >
+                      <i className="fas fa-image fa-3x text-muted"></i>
+                      <p className="mt-2 text-muted">Error al cargar imagen</p>
+                    </div>
                   </div>
                   <small className="form-help">
                     Esta es la imagen actual del producto
@@ -328,21 +441,75 @@ const EditarCreatina = () => {
                 </div>
               )}
 
-              {/* Vista previa de nueva imagen */}
+              {/* Vista previa de nueva imagen del producto */}
               {imagePreview && (
                 <div className="form-group full-width">
                   <label className="form-label">
                     <i className="fas fa-eye me-1"></i>Vista Previa Nueva Imagen
+                    del Producto
                   </label>
                   <div className="current-image-container">
                     <img
                       src={imagePreview}
-                      alt="Vista previa"
+                      alt="Vista previa nueva imagen"
                       className="current-image"
                     />
                   </div>
                   <small className="form-help">
                     Vista previa de la nueva imagen seleccionada
+                  </small>
+                </div>
+              )}
+
+              {/* Imagen nutricional actual */}
+              {currentImageNutricional && (
+                <div className="form-group full-width">
+                  <label className="form-label">
+                    <i className="fas fa-chart-bar me-1"></i>Imagen Nutricional
+                    Actual
+                  </label>
+                  <div className="current-image-container">
+                    <img
+                      src={currentImageNutricional}
+                      alt="Imagen nutricional actual"
+                      className="current-image"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "block";
+                      }}
+                    />
+                    <div
+                      className="no-image-placeholder"
+                      style={{ display: "none" }}
+                    >
+                      <i className="fas fa-chart-bar fa-3x text-muted"></i>
+                      <p className="mt-2 text-muted">
+                        Error al cargar imagen nutricional
+                      </p>
+                    </div>
+                  </div>
+                  <small className="form-help">
+                    Esta es la imagen nutricional actual
+                  </small>
+                </div>
+              )}
+
+              {/* Vista previa de nueva imagen nutricional */}
+              {imageNutricionalPreview && (
+                <div className="form-group full-width">
+                  <label className="form-label">
+                    <i className="fas fa-eye me-1"></i>Vista Previa Nueva Imagen
+                    Nutricional
+                  </label>
+                  <div className="current-image-container">
+                    <img
+                      src={imageNutricionalPreview}
+                      alt="Vista previa nueva imagen nutricional"
+                      className="current-image"
+                    />
+                  </div>
+                  <small className="form-help">
+                    Vista previa de la nueva imagen nutricional seleccionada
                   </small>
                 </div>
               )}
@@ -353,37 +520,33 @@ const EditarCreatina = () => {
                   className="btn btn-submit"
                   disabled={loading}
                 >
-                  <i className="fas fa-save me-2"></i>
-                  {loading ? "Guardando..." : "Actualizar Creatina"}
+                  {loading ? (
+                    <>
+                      <div
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                      >
+                        <span className="visually-hidden">Guardando...</span>
+                      </div>
+                      Actualizando...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-save me-2"></i>
+                      Actualizar Creatina
+                    </>
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={handleCancel}
                   className="btn btn-cancel"
+                  disabled={loading}
                 >
                   <i className="fas fa-times me-2"></i>Cancelar
                 </button>
               </div>
             </form>
-
-            {mensaje && (
-              <div
-                className={`alert-message ${
-                  mensaje.includes("éxito") || mensaje.includes("✅")
-                    ? "alert-success"
-                    : "alert-error"
-                }`}
-              >
-                <i
-                  className={`fas ${
-                    mensaje.includes("éxito") || mensaje.includes("✅")
-                      ? "fa-check-circle"
-                      : "fa-exclamation-circle"
-                  } me-2`}
-                ></i>
-                {mensaje}
-              </div>
-            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_CONFIG, buildUrl } from "../config/api";
 import "../styles/Registro.css";
 
 const Registro = () => {
@@ -18,6 +19,7 @@ const Registro = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [mensaje, setMensaje] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -30,23 +32,45 @@ const Registro = () => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+    // Limpiar mensaje general
+    if (mensaje) {
+      setMensaje("");
+    }
   };
 
   const validateForm = () => {
     const newErrors = {};
 
+    // Validación de campos requeridos
+    const camposRequeridos = [
+      "rut",
+      "nombre",
+      "apellido_paterno",
+      "fecha_nacimiento",
+      "telefono",
+      "email",
+      "password",
+      "confirmar_password",
+    ];
+
+    camposRequeridos.forEach((campo) => {
+      if (!formData[campo].trim()) {
+        newErrors[campo] = "Este campo es requerido";
+      }
+    });
+
     // Validación de RUT (formato básico)
-    if (!formData.rut || !/^\d{7,8}-[\dkK]$/.test(formData.rut)) {
+    if (formData.rut && !/^\d{7,8}-[\dkK]$/.test(formData.rut)) {
       newErrors.rut = "RUT inválido. Formato: 12345678-9";
     }
 
     // Validación de email
-    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email inválido";
     }
 
     // Validación de contraseña
-    if (formData.password.length < 6) {
+    if (formData.password && formData.password.length < 6) {
       newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
@@ -61,6 +85,13 @@ const Registro = () => {
       if (birthDate >= today) {
         newErrors.fecha_nacimiento =
           "La fecha de nacimiento debe ser en el pasado";
+      }
+
+      // Validar que sea mayor de 18 años
+      const edad = today.getFullYear() - birthDate.getFullYear();
+      if (edad < 18) {
+        newErrors.fecha_nacimiento =
+          "Debes ser mayor de 18 años para registrarte";
       }
     }
 
@@ -80,6 +111,7 @@ const Registro = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
+    setMensaje("");
 
     // Validar formulario
     const formErrors = validateForm();
@@ -93,23 +125,23 @@ const Registro = () => {
     try {
       // Preparar datos para enviar al backend
       const userData = {
-        rut: formData.rut,
-        nombre: formData.nombre,
-        apellido_paterno: formData.apellido_paterno,
-        apellido_materno: formData.apellido_materno,
+        rut: formData.rut.trim(),
+        nombre: formData.nombre.trim(),
+        apellido_paterno: formData.apellido_paterno.trim(),
+        apellido_materno: formData.apellido_materno.trim(),
         fecha_nacimiento: formData.fecha_nacimiento,
-        telefono: formData.telefono,
-        email: formData.email,
-        direccion: formData.direccion,
+        telefono: formData.telefono.trim(),
+        email: formData.email.trim().toLowerCase(),
+        direccion: formData.direccion.trim(),
         password: formData.password,
         is_admin: false, // Siempre False para usuarios normales
+        is_active: true, // Activo por defecto
       };
 
-      console.log("Enviando datos:", userData);
+      console.log("Enviando datos de registro:", userData);
 
-      // Llamada a la API de registro
-      const response = await fetch("http://127.0.0.1:8000/api/registro/", {
-        // Ajusta esta URL según tu backend
+      // ✅ URL usando la configuración centralizada
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.REGISTRO), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,247 +152,234 @@ const Registro = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("✅ Registro exitoso. Ahora puedes iniciar sesión.");
-        navigate("/login"); // Redirigir al login
+        setMensaje("✅ Registro exitoso. Ahora puedes iniciar sesión.");
+
+        // Limpiar formulario
+        setFormData({
+          rut: "",
+          nombre: "",
+          apellido_paterno: "",
+          apellido_materno: "",
+          fecha_nacimiento: "",
+          telefono: "",
+          email: "",
+          direccion: "",
+          password: "",
+          confirmar_password: "",
+        });
+
+        // Redirigir al login después de 2 segundos
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } else {
         // Manejar errores del backend
-        if (data.error) {
-          setErrors({ general: data.error });
-        } else if (data.errors) {
-          setErrors(data.errors);
+        if (data.detail) {
+          setMensaje(`❌ ${data.detail}`);
+        } else if (data.error) {
+          setMensaje(`❌ ${data.error}`);
+        } else if (data.rut) {
+          setErrors({ rut: data.rut[0] });
+        } else if (data.email) {
+          setErrors({ email: data.email[0] });
+        } else if (data.password) {
+          setErrors({ password: data.password[0] });
+        } else if (data.non_field_errors) {
+          setMensaje(`❌ ${data.non_field_errors.join(", ")}`);
         } else {
-          setErrors({ general: "Error en el registro. Intenta nuevamente." });
+          setMensaje("❌ Error en el registro. Intenta nuevamente.");
         }
       }
     } catch (error) {
       console.error("Error en el registro:", error);
-      setErrors({ general: "Error de conexión con el servidor" });
+      setMensaje("⚠️ Error de conexión con el servidor");
     } finally {
       setLoading(false);
     }
   };
 
+  const getFieldIcon = (fieldName) => {
+    const icons = {
+      rut: "fas fa-id-card",
+      nombre: "fas fa-user",
+      apellido_paterno: "fas fa-user-tag",
+      apellido_materno: "fas fa-user-tag",
+      fecha_nacimiento: "fas fa-calendar-alt",
+      telefono: "fas fa-phone",
+      email: "fas fa-envelope",
+      direccion: "fas fa-map-marker-alt",
+      password: "fas fa-lock",
+      confirmar_password: "fas fa-lock",
+    };
+    return icons[fieldName] || "fas fa-edit";
+  };
+
+  const formFields = [
+    {
+      name: "rut",
+      label: "RUT",
+      type: "text",
+      placeholder: "12345678-9",
+      required: true,
+      grid: "col-md-6",
+    },
+    {
+      name: "nombre",
+      label: "Nombre",
+      type: "text",
+      placeholder: "Tu nombre",
+      required: true,
+      grid: "col-md-6",
+    },
+    {
+      name: "apellido_paterno",
+      label: "Apellido Paterno",
+      type: "text",
+      placeholder: "Apellido paterno",
+      required: true,
+      grid: "col-md-6",
+    },
+    {
+      name: "apellido_materno",
+      label: "Apellido Materno",
+      type: "text",
+      placeholder: "Apellido materno",
+      required: true,
+      grid: "col-md-6",
+    },
+    {
+      name: "fecha_nacimiento",
+      label: "Fecha Nacimiento",
+      type: "date",
+      required: true,
+      grid: "col-md-6",
+    },
+    {
+      name: "telefono",
+      label: "Teléfono",
+      type: "text",
+      placeholder: "+56 9 1234 5678",
+      required: true,
+      grid: "col-md-6",
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "tu@email.com",
+      required: true,
+      grid: "col-12",
+    },
+    {
+      name: "direccion",
+      label: "Dirección",
+      type: "text",
+      placeholder: "Tu dirección",
+      required: false,
+      grid: "col-12",
+    },
+    {
+      name: "password",
+      label: "Contraseña",
+      type: "password",
+      placeholder: "Crea una contraseña",
+      required: true,
+      grid: "col-md-6",
+    },
+    {
+      name: "confirmar_password",
+      label: "Confirmar Contraseña",
+      type: "password",
+      placeholder: "Repite tu contraseña",
+      required: true,
+      grid: "col-md-6",
+    },
+  ];
+
   return (
-    <div className="register-container">
-      <div className="register-card">
-        <div className="brand-header">
-          <i className="fas fa-dumbbell"></i>
-          <h2>SuplementosPro</h2>
-          <p>Registro para Clientes</p>
+    <div className="register-container d-flex justify-content-center align-items-center min-vh-100 bg-primary">
+      <div
+        className="register-card bg-dark text-light p-4 rounded-3 shadow-lg"
+        style={{ width: "100%", maxWidth: "600px" }}
+      >
+        <div className="brand-header text-center mb-4">
+          <i className="fas fa-dumbbell fa-2x text-info mb-3"></i>
+          <h2 className="fw-bold">SuplementosPro</h2>
+          <p className="text-muted">Crear Cuenta de Cliente</p>
         </div>
 
+        {/* Mensaje general */}
+        {mensaje && (
+          <div
+            className={`alert ${
+              mensaje.includes("✅")
+                ? "alert-success"
+                : mensaje.includes("❌")
+                ? "alert-danger"
+                : "alert-warning"
+            } alert-dismissible fade show`}
+          >
+            <i
+              className={`fas ${
+                mensaje.includes("✅")
+                  ? "fa-check-circle"
+                  : mensaje.includes("❌")
+                  ? "fa-exclamation-circle"
+                  : "fa-exclamation-triangle"
+              } me-2`}
+            ></i>
+            {mensaje}
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setMensaje("")}
+            ></button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
-          {/* Mostrar errores generales */}
-          {errors.general && (
-            <div className="alert alert-danger">{errors.general}</div>
-          )}
-
-          {/* Campos del formulario */}
           <div className="row">
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-id-card me-1"></i> RUT *
-                </label>
-                <input
-                  type="text"
-                  name="rut"
-                  className="form-control"
-                  placeholder="12345678-9"
-                  value={formData.rut}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.rut && <div className="errorlist">{errors.rut}</div>}
+            {formFields.map((field) => (
+              <div key={field.name} className={field.grid}>
+                <div className="form-group mb-3">
+                  <label className="form-label">
+                    <i className={`${getFieldIcon(field.name)} me-1`}></i>
+                    {field.label}{" "}
+                    {field.required && <span className="text-danger">*</span>}
+                  </label>
+                  <input
+                    type={field.type}
+                    name={field.name}
+                    className={`form-control ${
+                      errors[field.name] ? "is-invalid" : ""
+                    }`}
+                    placeholder={field.placeholder}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={loading}
+                    min={field.type === "date" ? "1900-01-01" : undefined}
+                    max={
+                      field.name === "fecha_nacimiento"
+                        ? new Date().toISOString().split("T")[0]
+                        : undefined
+                    }
+                  />
+                  {errors[field.name] && (
+                    <div className="invalid-feedback d-block">
+                      {errors[field.name]}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-user me-1"></i> Nombre *
-                </label>
-                <input
-                  type="text"
-                  name="nombre"
-                  className="form-control"
-                  placeholder="Tu nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.nombre && (
-                  <div className="errorlist">{errors.nombre}</div>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="row">
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-user me-1"></i> Apellido Paterno *
-                </label>
-                <input
-                  type="text"
-                  name="apellido_paterno"
-                  className="form-control"
-                  placeholder="Apellido paterno"
-                  value={formData.apellido_paterno}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.apellido_paterno && (
-                  <div className="errorlist">{errors.apellido_paterno}</div>
-                )}
-              </div>
-            </div>
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-user me-1"></i> Apellido Materno *
-                </label>
-                <input
-                  type="text"
-                  name="apellido_materno"
-                  className="form-control"
-                  placeholder="Apellido materno"
-                  value={formData.apellido_materno}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.apellido_materno && (
-                  <div className="errorlist">{errors.apellido_materno}</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="row">
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-calendar me-1"></i> Fecha Nacimiento *
-                </label>
-                <input
-                  type="date"
-                  name="fecha_nacimiento"
-                  className="form-control"
-                  value={formData.fecha_nacimiento}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.fecha_nacimiento && (
-                  <div className="errorlist">{errors.fecha_nacimiento}</div>
-                )}
-              </div>
-            </div>
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-phone me-1"></i> Teléfono *
-                </label>
-                <input
-                  type="text"
-                  name="telefono"
-                  className="form-control"
-                  placeholder="+56 9 1234 5678"
-                  value={formData.telefono}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.telefono && (
-                  <div className="errorlist">{errors.telefono}</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              <i className="fas fa-envelope me-1"></i> Email *
-            </label>
-            <input
-              type="email"
-              name="email"
-              className="form-control"
-              placeholder="tu@email.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-            {errors.email && <div className="errorlist">{errors.email}</div>}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              <i className="fas fa-home me-1"></i> Dirección
-            </label>
-            <input
-              type="text"
-              name="direccion"
-              className="form-control"
-              placeholder="Tu dirección"
-              value={formData.direccion}
-              onChange={handleChange}
-              disabled={loading}
-            />
-            {errors.direccion && (
-              <div className="errorlist">{errors.direccion}</div>
-            )}
-          </div>
-
-          <div className="row">
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-lock me-1"></i> Contraseña *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  className="form-control"
-                  placeholder="Crea una contraseña"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.password && (
-                  <div className="errorlist">{errors.password}</div>
-                )}
-              </div>
-            </div>
-            <div className="col-md-6">
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fas fa-lock me-1"></i> Confirmar Contraseña *
-                </label>
-                <input
-                  type="password"
-                  name="confirmar_password"
-                  className="form-control"
-                  placeholder="Repite tu contraseña"
-                  value={formData.confirmar_password}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                {errors.confirmar_password && (
-                  <div className="errorlist">{errors.confirmar_password}</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <button type="submit" className="btn-register" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-info w-100 fw-bold py-2"
+            disabled={loading}
+          >
             {loading ? (
               <>
                 <div
@@ -373,18 +392,26 @@ const Registro = () => {
               </>
             ) : (
               <>
-                <i className="fas fa-user-plus me-1"></i> Registrarse
+                <i className="fas fa-user-plus me-2"></i> Crear Cuenta
               </>
             )}
           </button>
         </form>
 
-        <div className="register-footer">
-          <p>
+        <div className="register-footer text-center mt-4 pt-3 border-top border-secondary">
+          <p className="text-muted mb-2">
             ¿Ya tienes una cuenta?
-            <Link to="/login" className="login-link">
+            <Link
+              to="/login"
+              className="text-info text-decoration-none ms-1 fw-bold"
+              onClick={(e) => loading && e.preventDefault()}
+            >
               Inicia sesión aquí
             </Link>
+          </p>
+          <p className="text-muted small">
+            <i className="fas fa-shield-alt me-1"></i>
+            Tus datos están protegidos y seguros
           </p>
         </div>
       </div>

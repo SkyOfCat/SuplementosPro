@@ -1,10 +1,15 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  API_CONFIG,
+  getAuthHeadersFormData,
+  buildUrl,
+  handleResponse,
+} from "../../config/api";
 import "../../styles/admin/AgregarProteina.css";
 
 const AgregarProteina = () => {
   const navigate = useNavigate();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   const [formData, setFormData] = React.useState({
     nombre: "",
@@ -74,10 +79,14 @@ const AgregarProteina = () => {
     setLoading(true);
     setMensaje("");
 
-    // Obtener el token JWT
-    const token = localStorage.getItem("access_token");
+    // Validación
+    if (!formData.imagen || !formData.imagen_nutricional) {
+      setMensaje("❌ Ambas imágenes son requeridas");
+      setLoading(false);
+      return;
+    }
 
-    // Verificar si hay token
+    const token = localStorage.getItem("access_token");
     if (!token) {
       setMensaje("❌ Debes iniciar sesión para agregar productos");
       setLoading(false);
@@ -94,12 +103,10 @@ const AgregarProteina = () => {
     });
 
     try {
-      // ✅ URL CORREGIDA - usa API_BASE_URL
-      const response = await fetch(`${API_BASE_URL}/api/proteinas/`, {
+      // ✅ URL usando la configuración centralizada
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.PROTEINAS), {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: getAuthHeadersFormData(),
         body: data,
       });
 

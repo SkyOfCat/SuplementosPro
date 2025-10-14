@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../../config/api";
 import "../../styles/admin/GestionUsuarios.css";
 
 const GestionUsuarios = () => {
@@ -21,18 +22,16 @@ const GestionUsuarios = () => {
           return;
         }
 
-        const res = await fetch("http://localhost:8000/api/usuario/actual/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        // ✅ URL usando la configuración centralizada
+        const res = await fetch(buildUrl(API_CONFIG.ENDPOINTS.USUARIO_ACTUAL), {
+          headers: getAuthHeadersJSON(),
         });
 
         if (res.ok) {
           const data = await res.json();
           setUsuario(data);
           if (!data.is_admin) {
-            setMensaje("No tienes permisos para acceder a esta página");
+            setMensaje("❌ No tienes permisos para acceder a esta página");
             setTimeout(() => navigate("/"), 2000);
           }
         } else {
@@ -43,7 +42,7 @@ const GestionUsuarios = () => {
         }
       } catch (err) {
         console.error("Error fetching usuario:", err);
-        setMensaje("Error de conexión al cargar usuario");
+        setMensaje("⚠️ Error de conexión al cargar usuario");
       } finally {
         setCargandoUsuario(false);
       }
@@ -52,24 +51,32 @@ const GestionUsuarios = () => {
     const cargarUsuarios = async () => {
       try {
         const token = localStorage.getItem("access_token");
-        const response = await fetch("http://localhost:8000/api/usuarios/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+
+        // ✅ URL usando la configuración centralizada
+        const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.USUARIOS), {
+          headers: getAuthHeadersJSON(),
         });
 
         if (response.ok) {
           const data = await response.json();
           console.log("Usuarios cargados:", data);
           setUsuarios(data);
+        } else if (response.status === 401) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          setMensaje(
+            "❌ Sesión expirada. Por favor, inicie sesión nuevamente."
+          );
+          setTimeout(() => navigate("/login"), 2000);
+        } else if (response.status === 403) {
+          setMensaje("❌ No tienes permisos para ver los usuarios.");
         } else {
           console.error("Error cargando usuarios:", response.status);
-          setMensaje("Error al cargar los usuarios");
+          setMensaje("❌ Error al cargar los usuarios");
         }
       } catch (error) {
         console.error("Error cargando usuarios:", error);
-        setMensaje("Error de conexión al cargar usuarios");
+        setMensaje("⚠️ Error de conexión al cargar usuarios");
       } finally {
         setLoading(false);
       }
@@ -82,34 +89,47 @@ const GestionUsuarios = () => {
   }, [navigate, usuario?.is_admin]);
 
   const handleEliminarUsuario = async (usuarioId) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-      try {
-        const token = localStorage.getItem("access_token");
-        const response = await fetch(
-          `http://localhost:8000/api/usuarios/${usuarioId}/`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+      return;
+    }
 
-        if (response.ok) {
-          setUsuarios(usuarios.filter((u) => u.id !== usuarioId));
-          setMensaje("✅ Usuario eliminado exitosamente");
-          setTimeout(() => setMensaje(""), 3000);
-        } else {
-          const errorData = await response.json();
-          setMensaje(
-            `❌ Error al eliminar usuario: ${JSON.stringify(errorData)}`
-          );
+    try {
+      const token = localStorage.getItem("access_token");
+
+      // ✅ URL usando la configuración centralizada
+      const response = await fetch(
+        buildUrl(`${API_CONFIG.ENDPOINTS.USUARIOS}${usuarioId}/`),
+        {
+          method: "DELETE",
+          headers: getAuthHeadersJSON(),
         }
-      } catch (error) {
-        console.error("Error eliminando usuario:", error);
-        setMensaje("❌ Error de conexión al eliminar usuario");
+      );
+
+      if (response.ok) {
+        setUsuarios(usuarios.filter((u) => u.id !== usuarioId));
+        setMensaje("✅ Usuario eliminado exitosamente");
+        setTimeout(() => setMensaje(""), 3000);
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
+        setTimeout(() => navigate("/login"), 2000);
+      } else if (response.status === 403) {
+        setMensaje("❌ No tienes permisos para eliminar usuarios.");
+      } else if (response.status === 404) {
+        setMensaje("❌ El usuario no existe o ya fue eliminado.");
+      } else {
+        const errorData = await response.json();
+        console.error("Error del servidor:", errorData);
+        setMensaje(
+          `❌ Error al eliminar usuario: ${
+            errorData.detail || "Error desconocido"
+          }`
+        );
       }
+    } catch (error) {
+      console.error("Error eliminando usuario:", error);
+      setMensaje("⚠️ Error de conexión al eliminar usuario");
     }
   };
 
@@ -207,9 +227,22 @@ const GestionUsuarios = () => {
         {mensaje && (
           <div
             className={`alert ${
-              mensaje.includes("✅") ? "alert-success" : "alert-danger"
+              mensaje.includes("✅")
+                ? "alert-success"
+                : mensaje.includes("❌")
+                ? "alert-danger"
+                : "alert-warning"
             } alert-dismissible fade show`}
           >
+            <i
+              className={`fas ${
+                mensaje.includes("✅")
+                  ? "fa-check-circle"
+                  : mensaje.includes("❌")
+                  ? "fa-exclamation-circle"
+                  : "fa-exclamation-triangle"
+              } me-2`}
+            ></i>
             {mensaje}
             <button
               type="button"

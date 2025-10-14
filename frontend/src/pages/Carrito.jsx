@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Carrito.css";
@@ -19,11 +20,9 @@ function Carrito() {
     try {
       const token = localStorage.getItem("access_token");
 
-      const response = await fetch("http://localhost:8000/api/carrito/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      // ✅ URL usando la configuración centralizada
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.CARRITO), {
+        headers: getAuthHeadersJSON(),
       });
 
       if (response.ok) {
@@ -31,13 +30,17 @@ function Carrito() {
         console.log("Carrito obtenido:", data);
         setCarritoCompras(data.items || []);
         setTotalPagar(data.total || 0);
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
       } else {
         console.error("Error al obtener el carrito:", response.status);
-        setMensaje("Error al cargar el carrito");
+        setMensaje("❌ Error al cargar el carrito");
       }
     } catch (error) {
       console.error("Error de conexión:", error);
-      setMensaje("Error de conexión al cargar el carrito");
+      setMensaje("⚠️ Error de conexión al cargar el carrito");
     } finally {
       setCargando(false);
     }
@@ -49,14 +52,12 @@ function Carrito() {
 
       console.log("Eliminando producto con ID:", productoId);
 
+      // ✅ URL usando la configuración centralizada
       const response = await fetch(
-        `http://localhost:8000/api/carrito/${productoId}/`,
+        buildUrl(`${API_CONFIG.ENDPOINTS.CARRITO}${productoId}/`),
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeadersJSON(),
         }
       );
 
@@ -76,6 +77,10 @@ function Carrito() {
         setTotalPagar(nuevoTotal);
 
         setTimeout(() => setMensaje(""), 3000);
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
       } else {
         const errorData = await response.json();
         console.error("Error del servidor:", errorData);
@@ -83,7 +88,7 @@ function Carrito() {
       }
     } catch (error) {
       console.error("Error:", error);
-      setMensaje("❌ Error de conexión al eliminar producto");
+      setMensaje("⚠️ Error de conexión al eliminar producto");
     }
   };
 
@@ -96,14 +101,12 @@ function Carrito() {
     try {
       const token = localStorage.getItem("access_token");
 
+      // ✅ URL usando la configuración centralizada
       const response = await fetch(
-        "http://localhost:8000/api/carrito/actualizar/",
+        buildUrl(`${API_CONFIG.ENDPOINTS.CARRITO}actualizar/`),
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeadersJSON(),
           body: JSON.stringify({
             id: productoId,
             cantidad: nuevaCantidad,
@@ -117,6 +120,10 @@ function Carrito() {
         setTotalPagar(data.total || 0);
         setMensaje("✅ Cantidad actualizada");
         setTimeout(() => setMensaje(""), 3000);
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
       } else {
         const errorData = await response.json();
         setMensaje(`❌ ${errorData.error || "Error al actualizar cantidad"}`);
@@ -124,22 +131,24 @@ function Carrito() {
       }
     } catch (error) {
       console.error("Error:", error);
-      setMensaje("❌ Error de conexión al actualizar cantidad");
+      setMensaje("⚠️ Error de conexión al actualizar cantidad");
     }
   };
 
   const vaciarCarrito = async () => {
+    if (!window.confirm("¿Estás seguro de que deseas vaciar el carrito?")) {
+      return;
+    }
+
     try {
       const token = localStorage.getItem("access_token");
 
+      // ✅ URL usando la configuración centralizada
       const response = await fetch(
-        "http://localhost:8000/api/carrito/vaciar/",
+        buildUrl(`${API_CONFIG.ENDPOINTS.CARRITO}vaciar/`),
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeadersJSON(),
         }
       );
 
@@ -148,12 +157,16 @@ function Carrito() {
         setTotalPagar(0);
         setMensaje("✅ Carrito vaciado correctamente");
         setTimeout(() => setMensaje(""), 3000);
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
       } else {
         setMensaje("❌ Error al vaciar el carrito");
       }
     } catch (error) {
       console.error("Error:", error);
-      setMensaje("❌ Error de conexión al vaciar carrito");
+      setMensaje("⚠️ Error de conexión al vaciar carrito");
     }
   };
 
@@ -165,10 +178,21 @@ function Carrito() {
     }
 
     if (imagenPath.startsWith("/")) {
-      return `http://localhost:8000${imagenPath}`;
+      return `${API_CONFIG.BASE_URL}${imagenPath}`;
     }
 
-    return `http://localhost:8000/media/${imagenPath}`;
+    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
+  };
+
+  const getTipoProductoNombre = (tipo) => {
+    const tipos = {
+      proteina: "Proteína",
+      snack: "Snack",
+      creatina: "Creatina",
+      aminoacido: "Aminoácido",
+      vitamina: "Vitamina",
+    };
+    return tipos[tipo] || "Producto";
   };
 
   if (cargando) {
@@ -205,9 +229,22 @@ function Carrito() {
         {mensaje && (
           <div
             className={`alert ${
-              mensaje.includes("✅") ? "alert-success" : "alert-danger"
+              mensaje.includes("✅")
+                ? "alert-success"
+                : mensaje.includes("❌")
+                ? "alert-danger"
+                : "alert-warning"
             } alert-dismissible fade show`}
           >
+            <i
+              className={`fas ${
+                mensaje.includes("✅")
+                  ? "fa-check-circle"
+                  : mensaje.includes("❌")
+                  ? "fa-exclamation-circle"
+                  : "fa-exclamation-triangle"
+              } me-2`}
+            ></i>
             {mensaje}
             <button
               type="button"
@@ -256,7 +293,7 @@ function Carrito() {
                       <div>
                         <h6 className="mb-1 text-dark">{item.nombre}</h6>
                         <small className="text-muted">
-                          {item.tipo === "proteina" ? "Proteína" : "Snack"}
+                          {getTipoProductoNombre(item.tipo)}
                         </small>
                       </div>
                     </div>

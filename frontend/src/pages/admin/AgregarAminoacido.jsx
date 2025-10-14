@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_CONFIG, getAuthHeadersFormData, buildUrl } from "../../config/api";
 import "../../styles/admin/AgregarAminoacido.css";
 
 const AgregarAminoacido = () => {
@@ -11,14 +12,15 @@ const AgregarAminoacido = () => {
     stock: "",
     fecha_vencimiento: "",
     imagen: null,
-    imagen_nutricional: null, // NUEVO CAMPO OBLIGATORIO
+    imagen_nutricional: null,
   });
 
-  const [errors, setErrors] = useState({});
+  const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
-  const [nutritionalImagePreview, setNutritionalImagePreview] = useState(""); // NUEVO PREVIEW
+  const [nutritionalImagePreview, setNutritionalImagePreview] = useState("");
+  const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -40,7 +42,6 @@ const AgregarAminoacido = () => {
         setImagePreview("");
       }
     } else if (name === "imagen_nutricional") {
-      // NUEVO MANEJO DE IMAGEN NUTRICIONAL
       const file = files[0];
       setFormData((prev) => ({
         ...prev,
@@ -106,10 +107,10 @@ const AgregarAminoacido = () => {
         }
         break;
       case "imagen":
-        if (!value) error = "La imagen del producto es obligatoria"; // AHORA OBLIGATORIO
+        if (!value) error = "La imagen del producto es obligatoria";
         break;
       case "imagen_nutricional":
-        if (!value) error = "La imagen nutricional es obligatoria"; // NUEVA VALIDACIÓN OBLIGATORIA
+        if (!value) error = "La imagen nutricional es obligatoria";
         break;
       default:
         break;
@@ -126,8 +127,22 @@ const AgregarAminoacido = () => {
   };
 
   const validateForm = () => {
-    let isValid = true;
+    const camposRequeridos = ["nombre", "precio", "stock", "fecha_vencimiento"];
+    const camposFaltantes = camposRequeridos.filter(
+      (campo) => !formData[campo]
+    );
 
+    if (camposFaltantes.length > 0) {
+      setMensaje("❌ Por favor completa todos los campos requeridos");
+      return false;
+    }
+
+    if (!formData.imagen || !formData.imagen_nutricional) {
+      setMensaje("❌ Ambas imágenes son requeridas");
+      return false;
+    }
+
+    let isValid = true;
     Object.keys(formData).forEach((key) => {
       const fieldIsValid = validateField(key, formData[key]);
       if (!fieldIsValid) isValid = false;
@@ -138,81 +153,102 @@ const AgregarAminoacido = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setLoading(true);
+    setMensaje("");
 
-    const allTouched = {};
-    Object.keys(formData).forEach((key) => {
-      allTouched[key] = true;
-    });
-    setTouched(allTouched);
-
-    if (!validateForm()) {
-      setIsSubmitting(false);
+    // Validar token
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setMensaje("❌ Debes iniciar sesión para agregar productos");
+      setLoading(false);
+      navigate("/login");
       return;
     }
 
+    // Validar formulario
+    if (!validateForm()) {
+      setLoading(false);
+      return;
+    }
+
+    // Crear FormData
+    const data = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null && value !== "") {
+        data.append(key, value);
+      }
+    });
+
+    // Agregar tipo fijo para aminoácido
+    data.append("tipo_producto", "Aminoacido");
+    data.append("tipo", "Aminoacido");
+
     try {
-      const token = localStorage.getItem("access_token");
-
-      // Crear FormData para enviar archivos
-      const submitData = new FormData();
-      submitData.append("nombre", formData.nombre.trim());
-      submitData.append("precio", parseInt(formData.precio));
-      submitData.append("stock", parseInt(formData.stock));
-      submitData.append("fecha_vencimiento", formData.fecha_vencimiento);
-      submitData.append("tipo_producto", "Aminoacido");
-      submitData.append("tipo", "Aminoacido");
-
-      // IMÁGENES OBLIGATORIAS
-      if (formData.imagen) {
-        submitData.append("imagen", formData.imagen);
-      }
-
-      // NUEVO: Imagen nutricional obligatoria
-      if (formData.imagen_nutricional) {
-        submitData.append("imagen_nutricional", formData.imagen_nutricional);
-      }
-
-      const response = await fetch("http://localhost:8000/api/aminoacidos/", {
+      // ✅ URL usando la configuración centralizada
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.AMINOACIDOS), {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: submitData,
+        headers: getAuthHeadersFormData(),
+        body: data,
       });
 
+      console.log("Response status:", response.status);
+
       if (response.ok) {
-        alert("Aminoácido agregado con éxito");
-        navigate("/admin/productos");
+        setMensaje("✅ Aminoácido agregado con éxito");
+        setFormData({
+          nombre: "",
+          precio: "",
+          stock: "",
+          fecha_vencimiento: "",
+          imagen: null,
+          imagen_nutricional: null,
+        });
+        setImagePreview("");
+        setNutritionalImagePreview("");
+        setErrors({});
+        setTouched({});
+
+        setTimeout(() => navigate("/admin/productos"), 2000);
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
+        setTimeout(() => navigate("/login"), 2000);
+      } else if (response.status === 403) {
+        setMensaje("❌ No tienes permisos de administrador para esta acción.");
       } else {
         const errorData = await response.json();
         console.error("Error del servidor:", errorData);
 
         // Manejar errores específicos del backend
-        if (errorData.nombre) {
+        if (errorData.detail) {
+          setMensaje(`❌ ${errorData.detail}`);
+        } else if (errorData.non_field_errors) {
+          setMensaje(`❌ ${errorData.non_field_errors.join(", ")}`);
+        } else if (errorData.nombre) {
           setErrors((prev) => ({ ...prev, nombre: errorData.nombre[0] }));
+          setMensaje("❌ Error en los datos del formulario");
         } else if (errorData.precio) {
           setErrors((prev) => ({ ...prev, precio: errorData.precio[0] }));
+          setMensaje("❌ Error en los datos del formulario");
         } else if (errorData.imagen) {
           setErrors((prev) => ({ ...prev, imagen: errorData.imagen[0] }));
+          setMensaje("❌ Error en los datos del formulario");
         } else if (errorData.imagen_nutricional) {
           setErrors((prev) => ({
             ...prev,
             imagen_nutricional: errorData.imagen_nutricional[0],
           }));
-        } else if (errorData.non_field_errors) {
-          setErrors({ submit: errorData.non_field_errors[0] });
+          setMensaje("❌ Error en los datos del formulario");
         } else {
-          setErrors({
-            submit: "Error al guardar el aminoácido. Verifique los datos.",
-          });
+          setMensaje("❌ Error al agregar el aminoácido. Revisa los campos.");
         }
       }
     } catch (error) {
-      console.error("Error al agregar aminoácido:", error);
-      setErrors({ submit: "Error de conexión. Intente nuevamente." });
+      console.error("Error de conexión:", error);
+      setMensaje("⚠️ Error de conexión con el servidor.");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -257,10 +293,23 @@ const AgregarAminoacido = () => {
                 className="needs-validation"
                 noValidate
               >
-                {errors.submit && (
-                  <div className="alert alert-danger">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    {errors.submit}
+                {/* Mensaje general */}
+                {mensaje && (
+                  <div
+                    className={`alert ${
+                      mensaje.includes("éxito") || mensaje.includes("✅")
+                        ? "alert-success"
+                        : "alert-danger"
+                    }`}
+                  >
+                    <i
+                      className={`fas ${
+                        mensaje.includes("éxito") || mensaje.includes("✅")
+                          ? "fa-check-circle"
+                          : "fa-exclamation-circle"
+                      } me-2`}
+                    ></i>
+                    {mensaje}
                   </div>
                 )}
 
@@ -280,9 +329,9 @@ const AgregarAminoacido = () => {
                       value={formData.nombre}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      placeholder="Ej: BCAA 2:1:1 300g"
+                      placeholder="Ej: BCAA 'Nombre de la Marca' 300g"
                       required
-                      disabled={isSubmitting}
+                      disabled={loading}
                     />
                     {hasError("nombre") && (
                       <div className="invalid-feedback">{errors.nombre}</div>
@@ -338,7 +387,7 @@ const AgregarAminoacido = () => {
                         min="0"
                         step="100"
                         required
-                        disabled={isSubmitting}
+                        disabled={loading}
                       />
                     </div>
                     {hasError("precio") && (
@@ -367,7 +416,7 @@ const AgregarAminoacido = () => {
                       placeholder="0"
                       min="0"
                       required
-                      disabled={isSubmitting}
+                      disabled={loading}
                     />
                     {hasError("stock") && (
                       <div className="invalid-feedback">{errors.stock}</div>
@@ -400,7 +449,7 @@ const AgregarAminoacido = () => {
                       onBlur={handleBlur}
                       min={getMinDate()}
                       required
-                      disabled={isSubmitting}
+                      disabled={loading}
                     />
                     {hasError("fecha_vencimiento") && (
                       <div className="invalid-feedback">
@@ -433,7 +482,7 @@ const AgregarAminoacido = () => {
                         onBlur={handleBlur}
                         accept="image/*"
                         required
-                        disabled={isSubmitting}
+                        disabled={loading}
                       />
                       {hasError("imagen") && (
                         <div className="invalid-feedback">{errors.imagen}</div>
@@ -479,7 +528,7 @@ const AgregarAminoacido = () => {
                         onBlur={handleBlur}
                         accept="image/*"
                         required
-                        disabled={isSubmitting}
+                        disabled={loading}
                       />
                       {hasError("imagen_nutricional") && (
                         <div className="invalid-feedback">
@@ -515,16 +564,16 @@ const AgregarAminoacido = () => {
                         type="button"
                         onClick={handleCancel}
                         className="btn btn-secondary btn-lg me-md-2"
-                        disabled={isSubmitting}
+                        disabled={loading}
                       >
                         <i className="fas fa-arrow-left me-2"></i>Cancelar
                       </button>
                       <button
                         type="submit"
                         className="btn btn-warning btn-lg"
-                        disabled={isSubmitting}
+                        disabled={loading}
                       >
-                        {isSubmitting ? (
+                        {loading ? (
                           <>
                             <span
                               className="spinner-border spinner-border-sm me-2"

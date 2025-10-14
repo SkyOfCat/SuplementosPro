@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { API_CONFIG, buildUrl } from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Productos.css";
@@ -15,9 +16,6 @@ function Productos() {
   const [imagenesCargadas, setImagenesCargadas] = useState({});
   const [erroresImagen, setErroresImagen] = useState({});
 
-  // URL base desde variables de entorno
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
   useEffect(() => {
     obtenerProductos();
   }, []);
@@ -28,6 +26,7 @@ function Productos() {
 
   const obtenerProductos = async () => {
     try {
+      // ✅ URLs usando la configuración centralizada
       const [
         resProteinas,
         resSnacks,
@@ -35,11 +34,11 @@ function Productos() {
         resAminoacidos,
         resVitaminas,
       ] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/proteinas/`),
-        fetch(`${API_BASE_URL}/api/snacks/`),
-        fetch(`${API_BASE_URL}/api/creatinas/`),
-        fetch(`${API_BASE_URL}/api/aminoacidos/`),
-        fetch(`${API_BASE_URL}/api/vitaminas/`),
+        fetch(buildUrl(API_CONFIG.ENDPOINTS.PROTEINAS)),
+        fetch(buildUrl(API_CONFIG.ENDPOINTS.SNACKS)),
+        fetch(buildUrl(API_CONFIG.ENDPOINTS.CREATINAS)),
+        fetch(buildUrl(API_CONFIG.ENDPOINTS.AMINOACIDOS)),
+        fetch(buildUrl(API_CONFIG.ENDPOINTS.VITAMINAS)),
       ]);
 
       if (
@@ -109,11 +108,11 @@ function Productos() {
 
     // Si empieza con / (ruta absoluta del servidor)
     if (imagenPath.startsWith("/")) {
-      return `${API_BASE_URL}${imagenPath}`;
+      return `${API_CONFIG.BASE_URL}${imagenPath}`;
     }
 
     // Si es solo el nombre del archivo
-    return `${API_BASE_URL}/media/${imagenPath}`;
+    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
   };
 
   const aplicarFiltros = () => {

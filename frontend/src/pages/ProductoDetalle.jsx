@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/ProductoDetalle.css";
 
@@ -12,7 +13,7 @@ function ProductoDetalle({ tipo }) {
   const [cantidad, setCantidad] = useState(1);
   const [mensaje, setMensaje] = useState("");
   const [tipoMensaje, setTipoMensaje] = useState("");
-  const [imagenActiva, setImagenActiva] = useState(0); // Índice de imagen activa
+  const [imagenActiva, setImagenActiva] = useState(0);
 
   useEffect(() => {
     if (tipo && id) {
@@ -25,18 +26,18 @@ function ProductoDetalle({ tipo }) {
       let endpoint = "";
 
       const endpoints = {
-        proteina: `http://localhost:8000/api/proteinas/${id}/`,
-        snack: `http://localhost:8000/api/snacks/${id}/`,
-        creatina: `http://localhost:8000/api/creatinas/${id}/`,
-        aminoacido: `http://localhost:8000/api/aminoacidos/${id}/`,
-        vitamina: `http://localhost:8000/api/vitaminas/${id}/`,
+        proteina: buildUrl(`${API_CONFIG.ENDPOINTS.PROTEINAS}${id}/`),
+        snack: buildUrl(`${API_CONFIG.ENDPOINTS.SNACKS}${id}/`),
+        creatina: buildUrl(`${API_CONFIG.ENDPOINTS.CREATINAS}${id}/`),
+        aminoacido: buildUrl(`${API_CONFIG.ENDPOINTS.AMINOACIDOS}${id}/`),
+        vitamina: buildUrl(`${API_CONFIG.ENDPOINTS.VITAMINAS}${id}/`),
       };
 
       endpoint = endpoints[tipo];
 
       if (!endpoint) {
         console.error("Tipo de producto no válido:", tipo);
-        setMensaje("Tipo de producto no válido");
+        setMensaje("❌ Tipo de producto no válido");
         setTipoMensaje("error");
         return;
       }
@@ -46,14 +47,17 @@ function ProductoDetalle({ tipo }) {
       if (response.ok) {
         const data = await response.json();
         setProducto(data);
+      } else if (response.status === 404) {
+        setMensaje("❌ Producto no encontrado");
+        setTipoMensaje("error");
       } else {
-        console.error("Producto no encontrado. Status:", response.status);
-        setMensaje("Producto no encontrado");
+        console.error("Error cargando producto. Status:", response.status);
+        setMensaje("⚠️ Error al cargar el producto");
         setTipoMensaje("error");
       }
     } catch (error) {
       console.error("Error:", error);
-      setMensaje("Error al cargar el producto");
+      setMensaje("⚠️ Error de conexión al cargar el producto");
       setTipoMensaje("error");
     } finally {
       setCargando(false);
@@ -68,10 +72,10 @@ function ProductoDetalle({ tipo }) {
     }
 
     if (imagenPath.startsWith("/")) {
-      return `http://localhost:8000${imagenPath}`;
+      return `${API_CONFIG.BASE_URL}${imagenPath}`;
     }
 
-    return `http://localhost:8000/media/${imagenPath}`;
+    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
   };
 
   // Obtener todas las imágenes disponibles del producto
@@ -127,7 +131,7 @@ function ProductoDetalle({ tipo }) {
     e.preventDefault();
 
     if (!producto) {
-      setMensaje("No hay producto para agregar");
+      setMensaje("❌ No hay producto para agregar");
       setTipoMensaje("error");
       return;
     }
@@ -136,7 +140,7 @@ function ProductoDetalle({ tipo }) {
       const token = localStorage.getItem("access_token");
 
       if (!token) {
-        setMensaje("Debes iniciar sesión para agregar productos al carrito");
+        setMensaje("❌ Debes iniciar sesión para agregar productos al carrito");
         setTipoMensaje("error");
         setTimeout(() => navigate("/login"), 2000);
         return;
@@ -151,17 +155,12 @@ function ProductoDetalle({ tipo }) {
         tipo: tipo,
       };
 
-      const response = await fetch(
-        "http://localhost:8000/api/carrito/agregar/",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(carritoData),
-        }
-      );
+      // ✅ URL usando la configuración centralizada
+      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.CARRITO), {
+        method: "POST",
+        headers: getAuthHeadersJSON(),
+        body: JSON.stringify(carritoData),
+      });
 
       const responseData = await response.json();
 
@@ -169,6 +168,15 @@ function ProductoDetalle({ tipo }) {
         setMensaje("✅ Producto agregado al carrito con éxito");
         setTipoMensaje("success");
         setCantidad(1);
+      } else if (response.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
+        setTipoMensaje("error");
+        setTimeout(() => navigate("/login"), 2000);
+      } else if (response.status === 403) {
+        setMensaje("❌ No tienes permisos para realizar esta acción");
+        setTipoMensaje("error");
       } else {
         const errorMsg =
           responseData.error ||
@@ -179,7 +187,7 @@ function ProductoDetalle({ tipo }) {
       }
     } catch (error) {
       console.error("Error de conexión:", error);
-      setMensaje("❌ Error de conexión con el servidor");
+      setMensaje("⚠️ Error de conexión con el servidor");
       setTipoMensaje("error");
     }
 
@@ -291,10 +299,23 @@ function ProductoDetalle({ tipo }) {
             {mensaje && (
               <div
                 className={`alert ${
-                  tipoMensaje === "success" ? "alert-success" : "alert-danger"
+                  tipoMensaje === "success"
+                    ? "alert-success"
+                    : tipoMensaje === "error"
+                    ? "alert-danger"
+                    : "alert-warning"
                 } alert-dismissible fade show`}
                 role="alert"
               >
+                <i
+                  className={`fas ${
+                    tipoMensaje === "success"
+                      ? "fa-check-circle"
+                      : tipoMensaje === "error"
+                      ? "fa-exclamation-circle"
+                      : "fa-exclamation-triangle"
+                  } me-2`}
+                ></i>
                 <strong>{mensaje}</strong>
                 <button
                   type="button"
@@ -344,7 +365,7 @@ function ProductoDetalle({ tipo }) {
                         </div>
                       </div>
 
-                      {/* Galería de miniaturas - Similar a All Nutrition */}
+                      {/* Galería de miniaturas */}
                       {imagenes.length > 1 && (
                         <div className="image-gallery">
                           <h5 className="gallery-title">
@@ -533,7 +554,7 @@ function ProductoDetalle({ tipo }) {
   );
 }
 
-// Funciones auxiliares (sin cambios)
+// Funciones auxiliares
 function getCategoryBadgeClass(tipo) {
   const classes = {
     proteina: "bg-primary",
