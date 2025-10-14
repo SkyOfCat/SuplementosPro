@@ -1,5 +1,8 @@
 from pathlib import Path
 from datetime import timedelta
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 import dj_database_url
 import os
 
@@ -38,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary',
+    'cloudinary_storage',
     'rest_framework',
     'corsheaders',
     'api',
@@ -173,8 +178,15 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files (uploads)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Cloudinary configuration
+cloudinary.config( 
+  cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', 'dhhl65y0g'),
+  api_key = os.getenv('CLOUDINARY_API_KEY', '279785294665981'),
+  api_secret = os.getenv('CLOUDINARY_API_SECRET', 'hQraAy_iqzHj8f3OeuQPMQyhKEQ'),
+)
+
+# Reemplaza la configuración de MEDIA con Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

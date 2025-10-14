@@ -65,3 +65,81 @@ export const handleResponse = async (response) => {
   }
   return response.json();
 };
+
+// ✅ NUEVA FUNCIÓN: Manejo de URLs de imágenes con Cloudinary
+export const getImagenUrl = (imagenPath) => {
+  if (!imagenPath) {
+    return "https://via.placeholder.com/300x300/4A5568/FFFFFF?text=Imagen+No+Disponible";
+  }
+
+  // ✅ Si ya es una URL completa de Cloudinary
+  if (imagenPath.includes("res.cloudinary.com")) {
+    return imagenPath;
+  }
+
+  // ✅ Si es una URL HTTP/HTTPS normal
+  if (imagenPath.startsWith("http")) {
+    return imagenPath;
+  }
+
+  // ✅ Si es un objeto de Cloudinary (puede pasar en respuestas de la API)
+  if (typeof imagenPath === "object" && imagenPath.url) {
+    return imagenPath.url;
+  }
+
+  // ✅ Si es un string que representa un public_id de Cloudinary
+  if (
+    typeof imagenPath === "string" &&
+    !imagenPath.includes("/") &&
+    !imagenPath.startsWith("media/")
+  ) {
+    // Cloudinary puede devolver solo el public_id en algunos casos
+    return `https://res.cloudinary.com/tu_cloud_name/image/upload/${imagenPath}`;
+  }
+
+  // ✅ Para imágenes locales antiguas (durante la transición)
+  if (imagenPath.startsWith("/media/") || imagenPath.startsWith("media/")) {
+    // Mientras migras a Cloudinary, puedes servir desde tu servidor
+    return `${API_CONFIG.BASE_URL}${
+      imagenPath.startsWith("/") ? "" : "/"
+    }${imagenPath}`;
+  }
+
+  // ✅ Por defecto, usar placeholder
+  return "https://via.placeholder.com/300x300/4A5568/FFFFFF?text=Imagen+No+Disponible";
+};
+
+// ✅ Función mejorada con debug (opcional)
+export const getImagenUrlConDebug = (imagenPath, contexto = "") => {
+  const url = getImagenUrl(imagenPath);
+
+  if (import.meta.env.DEV) {
+    console.log("🔍 Debug Imagen:", {
+      contexto,
+      imagenPath,
+      urlFinal: url,
+      tipo: typeof imagenPath,
+      esCloudinary: url.includes("cloudinary.com"),
+      esPlaceholder: url.includes("placeholder.com"),
+      esLocal: url.includes(API_CONFIG.BASE_URL),
+    });
+  }
+
+  return url;
+};
+
+// ✅ Función para obtener imagen optimizada de Cloudinary
+export const getImagenOptimizada = (imagenPath, ancho = 300, alto = 300) => {
+  const urlBase = getImagenUrl(imagenPath);
+
+  // Si es Cloudinary, aplicar optimizaciones
+  if (urlBase.includes("res.cloudinary.com")) {
+    // Transformaciones de Cloudinary para optimización
+    return urlBase.replace(
+      "/upload/",
+      `/upload/w_${ancho},h_${alto},c_fill,q_auto,f_auto/`
+    );
+  }
+
+  return urlBase;
+};

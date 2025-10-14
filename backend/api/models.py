@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MinValueValidator
 from django.forms import ValidationError
+from cloudinary.models import CloudinaryField
+
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, email, nombre, password=None, **extra_fields):
@@ -76,13 +78,12 @@ class Proteina(models.Model):
     peso = models.CharField(max_length=30)
     precio = models.PositiveIntegerField()
     stock = models.IntegerField(validators=[MinValueValidator(0)])
-    imagen = models.ImageField(upload_to='productos/proteinas', null=False, blank=False)
-    imagen_nutricional = models.ImageField(
-        upload_to='productos/proteinas/info_nutricional', 
-        null=False, 
-        blank=False,
-        verbose_name="Imagen Información Nutricional"
-    )
+    imagen = CloudinaryField(
+        'imagen', 
+        folder='suplementospro/productos/proteinas')
+    imagen_nutricional = CloudinaryField(
+        'imagen_nutricional',
+        folder='suplementospro/productos/proteinas/info_nutricional')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -103,13 +104,12 @@ class Snack(models.Model):
     fecha_vencimiento = models.DateField()
     precio = models.PositiveIntegerField()
     stock = models.IntegerField(validators=[MinValueValidator(0)])
-    imagen = models.ImageField(upload_to='productos/snacks', null=False, blank=False)
-    imagen_nutricional = models.ImageField(
-        upload_to='productos/snacks/info_nutricional', 
-        null=False, 
-        blank=False,
-        verbose_name="Imagen Información Nutricional"
-    )
+    imagen = CloudinaryField(
+        'imagen',
+        folder='suplementospro/productos/snacks')
+    imagen_nutricional = CloudinaryField(
+        'imagen_nutricional',
+        folder='suplementospro/productos/snacks/info_nutricional')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -130,13 +130,12 @@ class Creatina(models.Model):
     fecha_vencimiento = models.DateField()
     precio = models.PositiveIntegerField()
     stock = models.IntegerField(validators=[MinValueValidator(0)])
-    imagen = models.ImageField(upload_to='productos/creatinas', null=False, blank=False)
-    imagen_nutricional = models.ImageField(
-        upload_to='productos/creatinas/info_nutricional', 
-        null=False, 
-        blank=False,
-        verbose_name="Imagen Información Nutricional"
-    )
+    imagen = CloudinaryField(
+        'imagen',
+        folder='suplementospro/productos/creatinas')
+    imagen_nutricional = CloudinaryField(
+        'imagen_nutricional',
+        folder='suplementospro/productos/creatinas/info_nutricional')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     
@@ -158,13 +157,12 @@ class Aminoacido(models.Model):
     fecha_vencimiento = models.DateField()
     precio = models.PositiveIntegerField()
     stock = models.IntegerField(validators=[MinValueValidator(0)])
-    imagen = models.ImageField(upload_to='productos/aminoacidos', null=False, blank=False)
-    imagen_nutricional = models.ImageField(
-        upload_to='productos/aminoacidos/info_nutricional', 
-        null=False, 
-        blank=False,
-        verbose_name="Imagen Información Nutricional"
-    )
+    imagen = CloudinaryField(
+        'imagen',
+        folder='suplementospro/productos/aminoacidos')
+    imagen_nutricional = CloudinaryField(
+        'imagen_nutricional',
+        folder='suplementospro/productos/aminoacidos/info_nutricional')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     
@@ -186,13 +184,12 @@ class Vitamina(models.Model):
     fecha_vencimiento = models.DateField()
     precio = models.PositiveIntegerField()
     stock = models.IntegerField(validators=[MinValueValidator(0)])
-    imagen = models.ImageField(upload_to='productos/vitaminas', null=False, blank=False)
-    imagen_nutricional = models.ImageField(
-        upload_to='productos/vitaminas/info_nutricional', 
-        null=False, 
-        blank=False,
-        verbose_name="Imagen Información Nutricional"
-    )
+    imagen = CloudinaryField(
+        'imagen',
+        folder='suplementospro/productos/vitaminas')
+    imagen_nutricional = CloudinaryField(
+        'imagen_nutricional',
+        folder='suplementospro/productos/vitaminas/info_nutricional')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     

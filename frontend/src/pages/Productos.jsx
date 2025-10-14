@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { API_CONFIG, buildUrl } from "../config/api";
+import {
+  API_CONFIG,
+  buildUrl,
+  getImagenUrl, // ✅ IMPORTAR LA FUNCIÓN CENTRALIZADA
+} from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Productos.css";
@@ -96,23 +100,6 @@ function Productos() {
     } finally {
       setCargando(false);
     }
-  };
-
-  const getImagenUrl = (imagenPath) => {
-    if (!imagenPath) return null;
-
-    // Si ya es una URL completa
-    if (imagenPath.startsWith("http")) {
-      return imagenPath;
-    }
-
-    // Si empieza con / (ruta absoluta del servidor)
-    if (imagenPath.startsWith("/")) {
-      return `${API_CONFIG.BASE_URL}${imagenPath}`;
-    }
-
-    // Si es solo el nombre del archivo
-    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
   };
 
   const aplicarFiltros = () => {

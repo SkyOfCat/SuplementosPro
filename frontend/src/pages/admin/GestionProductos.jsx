@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../../config/api";
+import {
+  API_CONFIG,
+  getAuthHeadersJSON,
+  buildUrl,
+  getImagenUrl,
+} from "../../config/api";
 import "../../styles/admin/GestionProductos.css";
 
 const GestionProductos = () => {
@@ -219,21 +224,6 @@ const GestionProductos = () => {
       }
     });
     setProductos(productosOrdenados);
-  };
-
-  // Función para construir la URL correcta de la imagen
-  const getImagenUrl = (imagenPath) => {
-    if (!imagenPath) return null;
-
-    if (imagenPath.startsWith("http")) {
-      return imagenPath;
-    }
-
-    if (imagenPath.startsWith("/")) {
-      return `${API_CONFIG.BASE_URL}${imagenPath}`;
-    }
-
-    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
   };
 
   // Función para manejar error en carga de imagen
