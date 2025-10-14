@@ -1,11 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  API_CONFIG,
-  getAuthHeadersFormData,
-  buildUrl,
-  handleResponse,
-} from "../../config/api";
+import { API_CONFIG, getAuthHeadersFormData, buildUrl } from "../../config/api";
 import "../../styles/admin/AgregarProteina.css";
 
 const AgregarProteina = () => {
@@ -28,43 +23,91 @@ const AgregarProteina = () => {
   const [imagePreview, setImagePreview] = React.useState("");
   const [nutritionalImagePreview, setNutritionalImagePreview] =
     React.useState("");
+  const [errors, setErrors] = React.useState({});
+
+  // Validación de formulario
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.nombre.trim()) newErrors.nombre = "El nombre es requerido";
+    if (!formData.sabor.trim()) newErrors.sabor = "El sabor es requerido";
+    if (!formData.tipo) newErrors.tipo = "El tipo de proteína es requerido";
+    if (!formData.fecha_vencimiento)
+      newErrors.fecha_vencimiento = "La fecha de vencimiento es requerida";
+    if (!formData.peso.trim()) newErrors.peso = "El peso es requerido";
+    if (!formData.precio || formData.precio <= 0)
+      newErrors.precio = "El precio debe ser mayor a 0";
+    if (!formData.stock || formData.stock < 0)
+      newErrors.stock = "El stock no puede ser negativo";
+    if (!formData.imagen)
+      newErrors.imagen = "La imagen del producto es requerida";
+    if (!formData.imagen_nutricional)
+      newErrors.imagen_nutricional = "La imagen nutricional es requerida";
+
+    // Validación de fecha
+    if (formData.fecha_vencimiento) {
+      const selectedDate = new Date(formData.fecha_vencimiento);
+      const today = new Date();
+      if (selectedDate <= today) {
+        newErrors.fecha_vencimiento = "La fecha de vencimiento debe ser futura";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "imagen") {
-      const file = files[0];
-      setFormData((prev) => ({
-        ...prev,
-        imagen: file,
-      }));
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
 
-      // Vista previa para imagen del producto
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImagePreview(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setImagePreview("");
+    if (name === "imagen" || name === "imagen_nutricional") {
+      const file = files[0];
+
+      // Validar tipo de archivo
+      if (file && !file.type.startsWith("image/")) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "Solo se permiten archivos de imagen",
+        }));
+        return;
       }
-    } else if (name === "imagen_nutricional") {
-      const file = files[0];
+
+      // Validar tamaño (max 5MB)
+      if (file && file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "La imagen no debe superar los 5MB",
+        }));
+        return;
+      }
+
       setFormData((prev) => ({
         ...prev,
-        imagen_nutricional: file,
+        [name]: file,
       }));
 
-      // Vista previa para imagen nutricional
+      // Vista previa
       if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          setNutritionalImagePreview(e.target.result);
+          if (name === "imagen") {
+            setImagePreview(e.target.result);
+          } else {
+            setNutritionalImagePreview(e.target.result);
+          }
         };
         reader.readAsDataURL(file);
       } else {
-        setNutritionalImagePreview("");
+        if (name === "imagen") {
+          setImagePreview("");
+        } else {
+          setNutritionalImagePreview("");
+        }
       }
     } else {
       setFormData((prev) => ({
@@ -76,15 +119,14 @@ const AgregarProteina = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMensaje("");
 
-    // Validación
-    if (!formData.imagen || !formData.imagen_nutricional) {
-      setMensaje("❌ Ambas imágenes son requeridas");
-      setLoading(false);
+    if (!validateForm()) {
+      setMensaje("❌ Por favor, corrige los errores en el formulario");
       return;
     }
+
+    setLoading(true);
+    setMensaje("");
 
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -94,26 +136,26 @@ const AgregarProteina = () => {
       return;
     }
 
-    // Crear objeto FormData para enviar imagen y texto
-    const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null && value !== "") {
-        data.append(key, value);
-      }
-    });
-
     try {
-      // ✅ URL usando la configuración centralizada
+      const data = new FormData();
+
+      // Agregar todos los campos al FormData
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== "") {
+          data.append(key, value);
+        }
+      });
+
       const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.PROTEINAS), {
         method: "POST",
         headers: getAuthHeadersFormData(),
         body: data,
       });
 
-      console.log("Response status:", response.status);
-
       if (response.ok) {
         setMensaje("✅ Producto agregado con éxito");
+
+        // Resetear formulario
         setFormData({
           nombre: "",
           sabor: "",
@@ -127,36 +169,51 @@ const AgregarProteina = () => {
         });
         setImagePreview("");
         setNutritionalImagePreview("");
+        setErrors({});
 
         setTimeout(() => navigate("/admin/productos"), 2000);
-      } else if (response.status === 401) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
-        setTimeout(() => navigate("/login"), 2000);
-      } else if (response.status === 403) {
-        setMensaje("❌ No tienes permisos de administrador para esta acción.");
       } else {
         const errorData = await response.json();
         console.error("Error del servidor:", errorData);
-        if (errorData.detail) {
-          setMensaje(`❌ ${errorData.detail}`);
-        } else if (errorData.non_field_errors) {
-          setMensaje(`❌ ${errorData.non_field_errors.join(", ")}`);
+
+        // Manejar errores del servidor
+        if (response.status === 401) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          setMensaje(
+            "❌ Sesión expirada. Por favor, inicie sesión nuevamente."
+          );
+          setTimeout(() => navigate("/login"), 2000);
+        } else if (response.status === 400) {
+          // Mostrar errores de validación del servidor
+          const serverErrors = {};
+          Object.keys(errorData).forEach((key) => {
+            serverErrors[key] = Array.isArray(errorData[key])
+              ? errorData[key].join(", ")
+              : errorData[key];
+          });
+          setErrors(serverErrors);
+          setMensaje("❌ Error en los datos del formulario");
         } else {
-          setMensaje("❌ Error al agregar el producto. Revisa los campos.");
+          setMensaje(errorData.detail || "❌ Error al agregar el producto");
         }
       }
     } catch (error) {
       console.error("Error de conexión:", error);
-      setMensaje("⚠️ Error de conexión con el servidor.");
+      setMensaje("⚠️ Error de conexión con el servidor");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate("/admin/productos");
+    if (
+      window.confirm(
+        "¿Estás seguro de que quieres cancelar? Los datos no guardados se perderán."
+      )
+    ) {
+      navigate("/admin/productos");
+    }
   };
 
   const getFieldIcon = (fieldName) => {
@@ -185,7 +242,12 @@ const AgregarProteina = () => {
     } = field;
 
     return (
-      <div className={`form-group ${required ? "required" : ""}`} key={name}>
+      <div
+        className={`form-group ${required ? "required" : ""} ${
+          errors[name] ? "has-error" : ""
+        }`}
+        key={name}
+      >
         <label htmlFor={name} className="form-label">
           <i className={`${getFieldIcon(name)} me-1`}></i>
           {label}
@@ -197,7 +259,7 @@ const AgregarProteina = () => {
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="form-control"
+            className={`form-control ${errors[name] ? "is-invalid" : ""}`}
             required={required}
           >
             <option value="">Seleccionar {label.toLowerCase()}</option>
@@ -213,7 +275,7 @@ const AgregarProteina = () => {
             id={name}
             name={name}
             onChange={handleChange}
-            className="form-control"
+            className={`form-control ${errors[name] ? "is-invalid" : ""}`}
             accept="image/*"
             required={required}
           />
@@ -224,13 +286,19 @@ const AgregarProteina = () => {
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="form-control"
+            className={`form-control ${errors[name] ? "is-invalid" : ""}`}
             placeholder={`Ingrese ${label.toLowerCase()}`}
             required={required}
+            min={
+              type === "number" ? (name === "precio" ? "1" : "0") : undefined
+            }
           />
         )}
 
         {helpText && <small className="form-help">{helpText}</small>}
+        {errors[name] && (
+          <div className="invalid-feedback d-block">{errors[name]}</div>
+        )}
       </div>
     );
   };
@@ -262,8 +330,20 @@ const AgregarProteina = () => {
       required: true,
       helpText: "Ejemplo: 2kg, 5lbs, 900g",
     },
-    { name: "precio", label: "Precio ($)", type: "number", required: true },
-    { name: "stock", label: "Stock", type: "number", required: true },
+    {
+      name: "precio",
+      label: "Precio ($)",
+      type: "number",
+      required: true,
+      min: 1,
+    },
+    {
+      name: "stock",
+      label: "Stock",
+      type: "number",
+      required: true,
+      min: 0,
+    },
   ];
 
   return (
@@ -293,7 +373,11 @@ const AgregarProteina = () => {
                 <div className="row">
                   {/* Imagen del Producto */}
                   <div className="col-12 mb-4">
-                    <div className="image-upload-card required">
+                    <div
+                      className={`image-upload-card required ${
+                        errors.imagen ? "has-error" : ""
+                      }`}
+                    >
                       <label htmlFor="imagen" className="form-label fw-bold">
                         <i className="fas fa-image me-2"></i>Imagen del Producto
                         *
@@ -303,15 +387,23 @@ const AgregarProteina = () => {
                         id="imagen"
                         name="imagen"
                         onChange={handleChange}
-                        className="form-control"
+                        className={`form-control ${
+                          errors.imagen ? "is-invalid" : ""
+                        }`}
                         accept="image/*"
                         required
                       />
                       <div className="form-text">
-                        Imagen principal de la proteína (obligatoria)
+                        Imagen principal de la proteína (formatos: JPG, PNG,
+                        WEBP. Máx: 5MB)
                       </div>
+                      {errors.imagen && (
+                        <div className="invalid-feedback d-block">
+                          {errors.imagen}
+                        </div>
+                      )}
 
-                      {/* Vista previa de la imagen del producto */}
+                      {/* Vista previa */}
                       {imagePreview && (
                         <div className="mt-3 text-center">
                           <p className="small fw-bold mb-2">
@@ -330,7 +422,11 @@ const AgregarProteina = () => {
 
                   {/* Imagen Nutricional */}
                   <div className="col-12 mb-4">
-                    <div className="image-upload-card required">
+                    <div
+                      className={`image-upload-card required ${
+                        errors.imagen_nutricional ? "has-error" : ""
+                      }`}
+                    >
                       <label
                         htmlFor="imagen_nutricional"
                         className="form-label fw-bold"
@@ -343,15 +439,23 @@ const AgregarProteina = () => {
                         id="imagen_nutricional"
                         name="imagen_nutricional"
                         onChange={handleChange}
-                        className="form-control"
+                        className={`form-control ${
+                          errors.imagen_nutricional ? "is-invalid" : ""
+                        }`}
                         accept="image/*"
                         required
                       />
                       <div className="form-text">
-                        Tabla de información nutricional (obligatoria)
+                        Tabla de información nutricional (formatos: JPG, PNG,
+                        WEBP. Máx: 5MB)
                       </div>
+                      {errors.imagen_nutricional && (
+                        <div className="invalid-feedback d-block">
+                          {errors.imagen_nutricional}
+                        </div>
+                      )}
 
-                      {/* Vista previa de la imagen nutricional */}
+                      {/* Vista previa */}
                       {nutritionalImagePreview && (
                         <div className="mt-3 text-center">
                           <p className="small fw-bold mb-2">
@@ -383,6 +487,7 @@ const AgregarProteina = () => {
                   type="button"
                   onClick={handleCancel}
                   className="btn btn-cancel"
+                  disabled={loading}
                 >
                   <i className="fas fa-times me-2"></i>Cancelar
                 </button>
@@ -391,11 +496,11 @@ const AgregarProteina = () => {
 
             {mensaje && (
               <div
-                className={`alert alert-message ${
+                className={`alert ${
                   mensaje.includes("éxito") || mensaje.includes("✅")
                     ? "alert-success"
-                    : "alert-error"
-                }`}
+                    : "alert-danger"
+                } alert-dismissible fade show`}
               >
                 <i
                   className={`fas ${
@@ -405,6 +510,11 @@ const AgregarProteina = () => {
                   } me-2`}
                 ></i>
                 {mensaje}
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setMensaje("")}
+                ></button>
               </div>
             )}
           </div>
