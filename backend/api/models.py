@@ -89,8 +89,8 @@ class Proteina(models.Model):
 
     class Meta:
         db_table = 'proteinas'
-        verbose_name = 'Proteína'
-        verbose_name_plural = 'Proteínas'
+        verbose_name = 'Proteina'
+        verbose_name_plural = 'Proteinas'
 
     def __str__(self):
         return f"{self.nombre} - {self.tipo}"
@@ -233,6 +233,9 @@ class DetalleVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, db_column='idVenta')
     proteina = models.ForeignKey(Proteina, on_delete=models.CASCADE, null=True, blank=True, db_column='idProteina')
     snack = models.ForeignKey(Snack, on_delete=models.CASCADE, null=True, blank=True, db_column='idSnack')
+    creatina = models.ForeignKey(Creatina, on_delete=models.CASCADE, null=True, blank=True, db_column='idCreatina')
+    aminoacido = models.ForeignKey(Aminoacido, on_delete=models.CASCADE, null=True, blank=True, db_column='idAminoacido')
+    vitamina = models.ForeignKey(Vitamina, on_delete=models.CASCADE, null=True, blank=True, db_column='idVitamina')
     
     cantidad = models.IntegerField(validators=[MinValueValidator(1)])
     precio_unitario = models.PositiveIntegerField()
@@ -256,11 +259,11 @@ class DetalleVenta(models.Model):
             self.venta.save(force_recalculate=True)
         
     def clean(self):
-        if not (bool(self.proteina) ^ bool(self.snack)):
-            raise ValidationError('Debe seleccionar un producto (proteína o snack)')
+        if not (bool(self.proteina) ^ bool(self.snack) ^ bool(self.creatina) ^ bool(self.aminoacido) ^ bool(self.vitamina)):
+            raise ValidationError('Debe seleccionar un producto (proteína o snack o creatina o aminoácido o vitamina)')
 
     def get_producto(self):
-        return self.proteina or self.snack
+        return self.proteina or self.snack or self.creatina or self.aminoacido or self.vitamina
 
 # --- --- --- --- --- #
 
@@ -286,7 +289,14 @@ class ItemCarrito(models.Model):
     precio = models.PositiveIntegerField()
     cantidad = models.IntegerField(default=1, validators=[MinValueValidator(1)])
     imagen = models.CharField(max_length=500, blank=True, null=True)
-    tipo = models.CharField(max_length=20, choices=[('proteina', 'Proteína'), ('snack', 'Snack')])
+    tipo = models.CharField(max_length=20, choices=[
+        ('proteina', 'Proteina'), 
+        ('snack', 'Snack'), 
+        ('creatina', 'Creatina'),
+        ('aminoacido', 'Aminoacido'),
+        ('vitamina', 'Vitamina')
+        ]
+                            )
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
 
