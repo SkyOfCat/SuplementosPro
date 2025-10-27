@@ -68,6 +68,8 @@ export const handleResponse = async (response) => {
 
 // ✅ NUEVA FUNCIÓN: Manejo de URLs de imágenes con Cloudinary
 export const getImagenUrl = (imagenPath) => {
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
   if (!imagenPath) {
     return "https://via.placeholder.com/300x300/4A5568/FFFFFF?text=Imagen+No+Disponible";
   }
@@ -82,30 +84,27 @@ export const getImagenUrl = (imagenPath) => {
     return imagenPath;
   }
 
-  // ✅ Si es un objeto de Cloudinary (puede pasar en respuestas de la API)
+  // ✅ Si es un objeto de Cloudinary
   if (typeof imagenPath === "object" && imagenPath.url) {
     return imagenPath.url;
   }
 
-  // ✅ Si es un string que representa un public_id de Cloudinary
+  // ✅ CORREGIDO: Usar el cloud name real
   if (
     typeof imagenPath === "string" &&
     !imagenPath.includes("/") &&
     !imagenPath.startsWith("media/")
   ) {
-    // Cloudinary puede devolver solo el public_id en algunos casos
-    return `https://res.cloudinary.com/tu_cloud_name/image/upload/${imagenPath}`;
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${imagenPath}`;
   }
 
-  // ✅ Para imágenes locales antiguas (durante la transición)
+  // ✅ Para imágenes locales
   if (imagenPath.startsWith("/media/") || imagenPath.startsWith("media/")) {
-    // Mientras migras a Cloudinary, puedes servir desde tu servidor
     return `${API_CONFIG.BASE_URL}${
       imagenPath.startsWith("/") ? "" : "/"
     }${imagenPath}`;
   }
 
-  // ✅ Por defecto, usar placeholder
   return "https://via.placeholder.com/300x300/4A5568/FFFFFF?text=Imagen+No+Disponible";
 };
 
