@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../config/api";
+import {
+  API_CONFIG,
+  getAuthHeadersJSON,
+  buildUrl,
+  getImagenUrl, // ✅ IMPORTAR FUNCIÓN CLOUDINARY
+  getImagenOptimizada, // ✅ PARA IMÁGENES OPTIMIZADAS
+} from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/ProductoDetalle.css";
 
@@ -14,12 +20,30 @@ function ProductoDetalle({ tipo }) {
   const [mensaje, setMensaje] = useState("");
   const [tipoMensaje, setTipoMensaje] = useState("");
   const [imagenActiva, setImagenActiva] = useState(0);
+  const [erroresImagen, setErroresImagen] = useState({});
 
   useEffect(() => {
     if (tipo && id) {
       obtenerProducto();
     }
   }, [id, tipo]);
+
+  const getMiniaturaUrl = (imagenUrl) => {
+    if (!imagenUrl || imagenUrl.includes("placeholder.com")) {
+      return "https://via.placeholder.com/100x100/4A5568/FFFFFF?text=Miniatura";
+    }
+
+    // Si ya es una URL de Cloudinary, aplicar transformación para miniatura
+    if (imagenUrl.includes("cloudinary.com")) {
+      return imagenUrl.replace(
+        "/upload/",
+        "/upload/w_100,h_100,c_fill,q_auto,f_auto/"
+      );
+    }
+
+    // Para cualquier otra URL, devolverla tal cual
+    return imagenUrl;
+  };
 
   const obtenerProducto = async () => {
     try {
@@ -46,6 +70,7 @@ function ProductoDetalle({ tipo }) {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("📦 Producto cargado:", data); // Debug
         setProducto(data);
       } else if (response.status === 404) {
         setMensaje("❌ Producto no encontrado");
@@ -64,45 +89,61 @@ function ProductoDetalle({ tipo }) {
     }
   };
 
-  const getImagenUrl = (imagenPath) => {
-    if (!imagenPath) return null;
-
-    if (imagenPath.startsWith("http")) {
-      return imagenPath;
-    }
-
-    if (imagenPath.startsWith("/")) {
-      return `${API_CONFIG.BASE_URL}${imagenPath}`;
-    }
-
-    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
-  };
-
-  // Obtener todas las imágenes disponibles del producto
+  // ✅ FUNCIÓN ACTUALIZADA CON CLOUDINARY
   const getImagenesProducto = () => {
     if (!producto) return [];
 
     const imagenes = [];
 
-    // Imagen principal siempre primera
+    // Imagen principal optimizada (más grande para detalle)
     if (producto.imagen) {
       imagenes.push({
-        url: getImagenUrl(producto.imagen),
+        url: getImagenOptimizada(producto.imagen, 600, 600), // ✅ Tamaño mayor para detalle
         tipo: "principal",
         alt: producto.nombre,
+        descripcion: "Vista del producto",
       });
     }
 
-    // Imagen nutricional si existe
+    // Imagen nutricional optimizada
     if (producto.imagen_nutricional) {
       imagenes.push({
-        url: getImagenUrl(producto.imagen_nutricional),
+        url: getImagenOptimizada(producto.imagen_nutricional, 500, 700), // ✅ Formato vertical para tabla nutricional
         tipo: "nutricional",
         alt: `Información nutricional - ${producto.nombre}`,
+        descripcion: "Información nutricional",
+      });
+    }
+
+    // Si no hay imágenes, agregar placeholder
+    if (imagenes.length === 0) {
+      imagenes.push({
+        url: getImagenUrl(null), // ✅ Esto devuelve el placeholder
+        tipo: "placeholder",
+        alt: "Imagen no disponible",
+        descripcion: "Imagen no disponible",
       });
     }
 
     return imagenes;
+  };
+
+  // ✅ MANEJADORES DE ERRORES DE IMAGEN MEJORADOS
+  const manejarErrorImagen = (tipoImagen, productoId) => {
+    console.error(
+      `Error cargando imagen ${tipoImagen} para producto ${productoId}`
+    );
+    setErroresImagen((prev) => ({
+      ...prev,
+      [tipoImagen]: true,
+    }));
+  };
+
+  const manejarCargaImagen = (tipoImagen) => {
+    setErroresImagen((prev) => ({
+      ...prev,
+      [tipoImagen]: false,
+    }));
   };
 
   const aumentarCantidad = () => {
@@ -155,12 +196,15 @@ function ProductoDetalle({ tipo }) {
         tipo: tipo,
       };
 
-      // ✅ URL usando la configuración centralizada
-      const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.CARRITO), {
-        method: "POST",
-        headers: getAuthHeadersJSON(),
-        body: JSON.stringify(carritoData),
-      });
+      // ✅ CORREGIDO: Usar la URL de la acción 'agregar'
+      const response = await fetch(
+        buildUrl(`${API_CONFIG.ENDPOINTS.CARRITO}agregar/`),
+        {
+          method: "POST",
+          headers: getAuthHeadersJSON(),
+          body: JSON.stringify(carritoData),
+        }
+      );
 
       const responseData = await response.json();
 
@@ -339,7 +383,17 @@ function ProductoDetalle({ tipo }) {
                               src={imagenActual.url}
                               alt={imagenActual.alt}
                               className="product-detail-image"
+                              onLoad={() =>
+                                manejarCargaImagen(
+                                  imagenActual.tipo,
+                                  producto.id
+                                )
+                              }
                               onError={(e) => {
+                                manejarErrorImagen(
+                                  imagenActual.tipo,
+                                  producto.id
+                                );
                                 e.target.style.display = "none";
                                 e.target.nextSibling.style.display = "block";
                               }}
@@ -348,10 +402,18 @@ function ProductoDetalle({ tipo }) {
                           <div
                             className="no-image-placeholder-large"
                             style={{
-                              display: imagenActual?.url ? "none" : "block",
+                              display:
+                                imagenActual?.url &&
+                                !erroresImagen[imagenActual.tipo]
+                                  ? "none"
+                                  : "block",
                             }}
                           >
                             <i className="fas fa-image fa-5x text-light"></i>
+                            <p className="mt-2 text-light">
+                              {imagenActual?.descripcion ||
+                                "Imagen no disponible"}
+                            </p>
                           </div>
                           {enStock ? (
                             <span className="stock-badge in-stock">
@@ -363,6 +425,20 @@ function ProductoDetalle({ tipo }) {
                             </span>
                           )}
                         </div>
+
+                        {/* Descripción de la imagen actual */}
+                        <div className="image-description mt-2">
+                          <small className="text-muted">
+                            <i
+                              className={`fas ${
+                                imagenActual?.tipo === "nutricional"
+                                  ? "fa-chart-bar text-info"
+                                  : "fa-cube text-primary"
+                              } me-1`}
+                            ></i>
+                            {imagenActual?.descripcion}
+                          </small>
+                        </div>
                       </div>
 
                       {/* Galería de miniaturas */}
@@ -370,7 +446,7 @@ function ProductoDetalle({ tipo }) {
                         <div className="image-gallery">
                           <h5 className="gallery-title">
                             <i className="fas fa-images me-2"></i>
-                            Vista del Producto
+                            Vistas Disponibles
                           </h5>
                           <div className="thumbnail-container">
                             {imagenes.map((imagen, index) => (
@@ -382,20 +458,24 @@ function ProductoDetalle({ tipo }) {
                                 onClick={() => setImagenActiva(index)}
                               >
                                 <img
-                                  src={imagen.url}
+                                  src={getMiniaturaUrl(imagen.url)}
                                   alt={imagen.alt}
                                   className="thumbnail-image"
                                   onError={(e) => {
-                                    e.target.style.display = "none";
-                                    e.target.nextSibling.style.display = "flex";
+                                    console.error(
+                                      `Error cargando miniatura ${index}:`,
+                                      imagen.url
+                                    );
+                                    e.target.src =
+                                      "https://via.placeholder.com/100x100/4A5568/FFFFFF?text=Error";
                                   }}
+                                  onLoad={() =>
+                                    console.log(
+                                      `Miniatura ${index} cargada:`,
+                                      imagen.url
+                                    )
+                                  }
                                 />
-                                <div
-                                  className="thumbnail-placeholder"
-                                  style={{ display: "none" }}
-                                >
-                                  <i className="fas fa-image"></i>
-                                </div>
                                 <div className="thumbnail-badge">
                                   {imagen.tipo === "principal" ? (
                                     <i
@@ -554,7 +634,7 @@ function ProductoDetalle({ tipo }) {
   );
 }
 
-// Funciones auxiliares
+// Funciones auxiliares (se mantienen igual)
 function getCategoryBadgeClass(tipo) {
   const classes = {
     proteina: "bg-primary",

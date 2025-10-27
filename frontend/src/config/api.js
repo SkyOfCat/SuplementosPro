@@ -68,7 +68,14 @@ export const handleResponse = async (response) => {
 
 // ✅ NUEVA FUNCIÓN: Manejo de URLs de imágenes con Cloudinary
 export const getImagenUrl = (imagenPath) => {
-  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_CLOUD_NAME =
+    import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dhhl65y0g";
+
+  console.log("🔍 Cloudinary Debug - Entrada:", {
+    cloudName: CLOUDINARY_CLOUD_NAME,
+    imagenPath,
+    tipo: typeof imagenPath,
+  });
 
   if (!imagenPath) {
     return "https://via.placeholder.com/300x300/4A5568/FFFFFF?text=Imagen+No+Disponible";
@@ -89,16 +96,19 @@ export const getImagenUrl = (imagenPath) => {
     return imagenPath.url;
   }
 
-  // ✅ CORREGIDO: Usar el cloud name real
-  if (
-    typeof imagenPath === "string" &&
-    !imagenPath.includes("/") &&
-    !imagenPath.startsWith("media/")
-  ) {
+  // ✅ CORREGIDO: Si ya incluye "image/upload/" (viene de tu API)
+  if (imagenPath.includes("image/upload/")) {
+    const url = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/${imagenPath}`;
+    console.log("🔍 URL Cloudinary completa:", url);
+    return url;
+  }
+
+  // ✅ Para public_id simple
+  if (typeof imagenPath === "string" && !imagenPath.includes("/")) {
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${imagenPath}`;
   }
 
-  // ✅ Para imágenes locales
+  // ✅ Para rutas locales
   if (imagenPath.startsWith("/media/") || imagenPath.startsWith("media/")) {
     return `${API_CONFIG.BASE_URL}${
       imagenPath.startsWith("/") ? "" : "/"

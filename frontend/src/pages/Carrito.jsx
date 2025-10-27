@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { API_CONFIG, getAuthHeadersJSON, buildUrl } from "../config/api";
+import {
+  API_CONFIG,
+  getAuthHeadersJSON,
+  buildUrl,
+  getImagenUrl, // ✅ IMPORTAR FUNCIÓN CLOUDINARY
+  getImagenOptimizada, // ✅ PARA IMÁGENES OPTIMIZADAS
+} from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Carrito.css";
@@ -11,6 +17,7 @@ function Carrito() {
   const [totalPagar, setTotalPagar] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState("");
+  const [erroresImagen, setErroresImagen] = useState({});
 
   useEffect(() => {
     obtenerCarrito();
@@ -27,7 +34,7 @@ function Carrito() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Carrito obtenido:", data);
+        console.log("🛒 Carrito obtenido:", data);
         setCarritoCompras(data.items || []);
         setTotalPagar(data.total || 0);
       } else if (response.status === 401) {
@@ -50,7 +57,7 @@ function Carrito() {
     try {
       const token = localStorage.getItem("access_token");
 
-      console.log("Eliminando producto con ID:", productoId);
+      console.log("🗑️ Eliminando producto con ID:", productoId);
 
       // ✅ URL usando la configuración centralizada
       const response = await fetch(
@@ -170,18 +177,30 @@ function Carrito() {
     }
   };
 
-  const getImagenUrl = (imagenPath) => {
-    if (!imagenPath) return "/static/imagenes/default.png";
-
-    if (imagenPath.startsWith("http")) {
-      return imagenPath;
+  // ✅ FUNCIÓN ACTUALIZADA CON CLOUDINARY
+  const getImagenProducto = (imagenPath) => {
+    if (!imagenPath) {
+      return "https://via.placeholder.com/80x80/4A5568/FFFFFF?text=Producto";
     }
 
-    if (imagenPath.startsWith("/")) {
-      return `${API_CONFIG.BASE_URL}${imagenPath}`;
-    }
+    // ✅ Usar Cloudinary para imágenes optimizadas (tamaño pequeño para carrito)
+    return getImagenOptimizada(imagenPath, 80, 80);
+  };
 
-    return `${API_CONFIG.BASE_URL}/media/${imagenPath}`;
+  // ✅ MANEJADORES DE ERRORES DE IMAGEN
+  const manejarErrorImagen = (itemId) => {
+    console.error(`Error cargando imagen para producto ${itemId}`);
+    setErroresImagen((prev) => ({
+      ...prev,
+      [itemId]: true,
+    }));
+  };
+
+  const manejarCargaImagen = (itemId) => {
+    setErroresImagen((prev) => ({
+      ...prev,
+      [itemId]: false,
+    }));
   };
 
   const getTipoProductoNombre = (tipo) => {
@@ -193,6 +212,17 @@ function Carrito() {
       vitamina: "Vitamina",
     };
     return tipos[tipo] || "Producto";
+  };
+
+  const getBadgeClass = (tipo) => {
+    const classes = {
+      proteina: "bg-primary",
+      snack: "bg-warning",
+      creatina: "bg-info",
+      aminoacido: "bg-success",
+      vitamina: "bg-purple",
+    };
+    return classes[tipo] || "bg-secondary";
   };
 
   if (cargando) {
@@ -276,24 +306,39 @@ function Carrito() {
                 >
                   <div className="row align-items-center">
                     <div className="col-md-4 d-flex align-items-center">
-                      <img
-                        src={getImagenUrl(item.imagen)}
-                        alt={item.nombre}
-                        className="rounded me-3 border"
-                        style={{
-                          width: "60px",
-                          height: "60px",
-                          objectFit: "cover",
-                          backgroundColor: "#f8f9fa",
-                        }}
-                        onError={(e) => {
-                          e.target.src = "/static/imagenes/default.png";
-                        }}
-                      />
+                      <div className="position-relative me-3">
+                        <img
+                          src={getImagenProducto(item.imagen)}
+                          alt={item.nombre}
+                          className="rounded border"
+                          style={{
+                            width: "80px",
+                            height: "80px",
+                            objectFit: "cover",
+                            backgroundColor: "#f8f9fa",
+                          }}
+                          onLoad={() => manejarCargaImagen(item.id)}
+                          onError={(e) => {
+                            manejarErrorImagen(item.id);
+                            e.target.src =
+                              "https://via.placeholder.com/80x80/4A5568/FFFFFF?text=Imagen";
+                          }}
+                        />
+                        {/* Badge del tipo de producto */}
+                        <span
+                          className={`badge ${getBadgeClass(
+                            item.tipo
+                          )} position-absolute top-0 start-0 translate-middle`}
+                        >
+                          {getTipoProductoNombre(item.tipo).charAt(0)}
+                        </span>
+                      </div>
                       <div>
                         <h6 className="mb-1 text-dark">{item.nombre}</h6>
                         <small className="text-muted">
-                          {getTipoProductoNombre(item.tipo)}
+                          <span className={`badge ${getBadgeClass(item.tipo)}`}>
+                            {getTipoProductoNombre(item.tipo)}
+                          </span>
                         </small>
                       </div>
                     </div>

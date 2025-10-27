@@ -215,7 +215,9 @@ class VitaminaViewSet(viewsets.ModelViewSet):
 
 # --- CARRITO --- #
 class CarritoViewSet(viewsets.ViewSet):
+  
     permission_classes = [IsAuthenticated]
+   
 
     def get_carrito(self, usuario):
         """Obtiene o crea el carrito para el usuario"""
