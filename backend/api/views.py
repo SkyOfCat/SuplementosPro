@@ -8,9 +8,15 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.utils.html import strip_tags
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
 from .serializers import UsuarioSerializer, UsuarioRegistroSerializer, ProteinaSerializer, SnackSerializer, UsuarioUpdateSerializer
 from .serializers import CreatinaSerializer, AminoacidoSerializer, VitaminaSerializer
+from .serializers import PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from .models import Proteina, Snack, Creatina, Aminoacido, Vitamina, Venta, DetalleVenta, Carrito, ItemCarrito, Usuario
+from .models import PasswordResetToken
 
 Usuario = get_user_model()
 
@@ -139,6 +145,108 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 }
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_request(request):
+    serializer = PasswordResetRequestSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        user = Usuario.objects.get(email=email, is_active=True)
+        
+        # Invalidar tokens anteriores del usuario
+        PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+        
+        # Crear nuevo token de reset
+        reset_token = PasswordResetToken.objects.create(user=user)
+        
+        # Construir URL para el frontend
+        reset_url = f"{settings.FRONTEND_URL}/resetear-contrasena/{reset_token.token}"
+        
+        # Enviar email con template HTML
+        subject = 'Recuperación de Contraseña - SuplementosPro'
+        html_message = render_to_string('emails/password_reset.html', {
+            'user': user,
+            'reset_url': reset_url,
+            'expiration_hours': 24
+        })
+        plain_message = strip_tags(html_message)
+        
+        try:
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            
+            return Response({
+                'message': 'Se ha enviado un enlace de recuperación a tu email.'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"Error enviando email: {e}")
+            return Response({
+                'error': 'Error al enviar el email. Por favor intenta más tarde.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_confirm(request):
+    serializer = PasswordResetConfirmSerializer(data=request.data)
+    if serializer.is_valid():
+        reset_token = serializer.validated_data['reset_token']
+        new_password = serializer.validated_data['new_password']
+        
+        try:
+            # Cambiar contraseña del usuario
+            user = reset_token.user
+            user.set_password(new_password)
+            user.save()
+            
+            # Marcar token como usado
+            reset_token.used = True
+            reset_token.save()
+            
+            # Invalidar otros tokens activos del usuario
+            PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+            
+            return Response({
+                'message': 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': 'Error al restablecer la contraseña.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def password_reset_validate_token(request, token):
+    """Validar si un token es válido (para el frontend)"""
+    try:
+        reset_token = PasswordResetToken.objects.get(token=token, used=False)
+        if reset_token.is_valid():
+            return Response({
+                'valid': True,
+                'email': reset_token.user.email
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'valid': False,
+                'error': 'Token expirado'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    except PasswordResetToken.DoesNotExist:
+        return Response({
+            'valid': False,
+            'error': 'Token inválido'
+        }, status=status.HTTP_404_NOT_FOUND)
 # --- --- --- --- --- #
 
 # --- PROTEINAS --- #

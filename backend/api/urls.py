@@ -16,6 +16,9 @@ router.register(r'usuarios', views.UsuarioViewSet, basename='usuario')
 urlpatterns = [
     path('usuario/actual/', views.get_usuario_actual, name='usuario-actual'),
     path('registro/', views.registro_usuario, name='registro_usuario'),
+    path('password-reset/request/', views.password_reset_request, name='password-reset-request'),
+    path('password-reset/confirm/', views.password_reset_confirm, name='password-reset-confirm'),
+    path('password-reset/validate-token/<uuid:token>/', views.password_reset_validate_token, name='password-reset-validate-token'),
     # otras rutas... # si crea vistas en la api, solo ponga el nombre de la vista ej: registro/
     
     # route #

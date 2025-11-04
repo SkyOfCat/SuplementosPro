@@ -18,6 +18,9 @@ export const API_CONFIG = {
     // Endpoints específicos de vistas
     USUARIO_ACTUAL: "/api/usuario/actual/",
     REGISTRO: "/api/registro/",
+    PASSWORD_RESET_REQUEST: "/api/password-reset/request/",
+    PASSWORD_RESET_CONFIRM: "/api/password-reset/confirm/",
+    PASSWORD_RESET_VALIDATE: "/api/password-reset/validate-token/",
   },
   TIMEOUT: 10000,
 };

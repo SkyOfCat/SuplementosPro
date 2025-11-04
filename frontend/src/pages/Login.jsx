@@ -97,10 +97,7 @@ function Login() {
   };
 
   const handleRecoverPassword = () => {
-    // Función para recuperar contraseña (puede implementarse después)
-    alert("🔒 Función de recuperar contraseña - Próximamente");
-    // Para implementar después:
-    // navigate("/recuperar-contrasena");
+    navigate("/recuperar-contrasena");
   };
 
   const handleDemoLogin = () => {

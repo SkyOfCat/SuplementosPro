@@ -3,6 +3,9 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.validators import MinValueValidator
 from django.forms import ValidationError
 from cloudinary.models import CloudinaryField
+import uuid
+from datetime import timedelta
+from django.utils import timezone
 
 
 class UsuarioManager(BaseUserManager):
@@ -62,6 +65,23 @@ class Usuario(AbstractBaseUser):
     def is_staff(self):
         return self.is_admin 
 
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+    
+    def is_valid(self):
+        # El token expira después de 24 horas
+        return not self.used and (timezone.now() - self.created_at) < timedelta(hours=24)
+    
+    class Meta:
+        db_table = 'password_reset_tokens'
+        verbose_name = 'Token de recuperación'
+        verbose_name_plural = 'Tokens de recuperación'
+    
+    def __str__(self):
+        return f"Token para {self.user.email} - {'Válido' if self.is_valid() else 'Expirado'}"
 
 # --- PRODUCTOS --- #
 class Proteina(models.Model):

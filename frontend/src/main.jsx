@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
 import Login from "./pages/Login.jsx";
+import RecuperarContrasena from "./pages/RecuperarContrasena.jsx";
+import ResetearContrasena from "./pages/ResetarContrasena.jsx";
 import Productos from "./pages/Productos.jsx";
 import ProductoDetalle from "./pages/ProductoDetalle.jsx";
 import Carrito from "./pages/Carrito.jsx";
@@ -40,6 +42,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
+      <Route
+        path="/resetear-contrasena/:token"
+        element={<ResetearContrasena />}
+      />
       <Route path="/productos" element={<Productos />} />
       <Route path="/carrito" element={<Carrito />} />
       <Route path="/nosotros" element={<Nosotros />} />

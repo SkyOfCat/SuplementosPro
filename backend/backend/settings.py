@@ -31,7 +31,31 @@ if not DEBUG:
 
 ALLOWED_HOSTS = ['suplementospro.onrender.com', 'localhost', '127.0.0.1']
 
+# Configuración de emails
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # Motor de envío de emails
+EMAIL_HOST = 'smtp.gmail.com'  # Servidor de Gmail
+# EMAIL_HOST = 'smtp.office365.com'  # Para Outlook/Office365
+# EMAIL_HOST = 'smtp.mailgun.org'  # Para Mailgun
+# EMAIL_HOST = 'smtp.sendgrid.net'  # Para SendGrid
+EMAIL_PORT = 587  # Puerto para TLS (el más común)
+# EMAIL_PORT = 465  # Puerto para SSL
+EMAIL_USE_TLS = True  # Usar Transport Layer Security (recomendado)
+# EMAIL_USE_SSL = False  # No usar SSL si usas TLS
+EMAIL_HOST_USER = 'suplementospro.ventas@gmail.com'  # Tu email (quien envia el correo)
+EMAIL_HOST_PASSWORD = 'lggs hiqd ntxa qmmi'  # IMPORTANTE: No tu contraseña normal
+DEFAULT_FROM_EMAIL = 'SuplementosPro <suplementospro.ventas@gmail.com>'
+# Así aparecerá en los emails: "SuplementosPro <tu-email@gmail.com>"
+# (Opcional) Email para errores del servidor
+SERVER_EMAIL = 'errors@suplementospro.com'
+
+# settings.py (DESARROLLO)
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    # ... resto de configuración
 # Application definition
 
 INSTALLED_APPS = [
@@ -102,7 +126,9 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+                BASE_DIR / 'templates', #IMPORTANTE!!!
+            ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -208,7 +234,6 @@ if not DEBUG:
     
 CORS_ALLOWED_ORIGINS = [
     "https://suplementos-pro-shop.netlify.app",
-    "http://localhost:3000",
     "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True 

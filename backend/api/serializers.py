@@ -3,7 +3,7 @@ from .models import Usuario, Proteina, Snack, Venta, DetalleVenta
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import Usuario, Carrito, ItemCarrito, Creatina, Aminoacido, Vitamina
+from .models import Usuario, Carrito, ItemCarrito, Creatina, Aminoacido, Vitamina, PasswordResetToken
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -100,6 +100,37 @@ class UsuarioRegistroSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    
+    def validate_email(self, value):
+        if not Usuario.objects.filter(email=value, is_active=True).exists():
+            raise serializers.ValidationError("No existe un usuario activo con este email.")
+        return value
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    token = serializers.UUIDField()
+    new_password = serializers.CharField(min_length=6, write_only=True)
+    confirm_password = serializers.CharField(min_length=6, write_only=True)
+    
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("Las contraseñas no coinciden.")
+        
+        try:
+            reset_token = PasswordResetToken.objects.get(
+                token=data['token'], 
+                used=False
+            )
+            if not reset_token.is_valid():
+                raise serializers.ValidationError("El token ha expirado o es inválido.")
+        except PasswordResetToken.DoesNotExist:
+            raise serializers.ValidationError("Token inválido.")
+            
+        data['reset_token'] = reset_token
+        return data
+
 # --- PRODUCTOS --- #
 class ProteinaSerializer(serializers.ModelSerializer):
     class Meta:
