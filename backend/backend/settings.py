@@ -43,10 +43,9 @@ EMAIL_PORT = 587  # Puerto para TLS (el más común)
 # EMAIL_PORT = 465  # Puerto para SSL
 EMAIL_USE_TLS = True  # Usar Transport Layer Security (recomendado)
 # EMAIL_USE_SSL = False  # No usar SSL si usas TLS
-EMAIL_HOST_USER = 'suplementospro.ventas@gmail.com'  # Tu email (quien envia el correo)
-EMAIL_HOST_PASSWORD = 'lggs hiqd ntxa qmmi'  # IMPORTANTE: No tu contraseña normal
-DEFAULT_FROM_EMAIL = 'SuplementosPro <suplementospro.ventas@gmail.com>'
-# Así aparecerá en los emails: "SuplementosPro <tu-email@gmail.com>"
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')  # Tu email (quien envia el correo)
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # IMPORTANTE: No tu contraseña normal
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'SuplementosPro <suplementospro.ventas@gmail.com>')# Así aparecerá en los emails: "SuplementosPro <tu-email@gmail.com>"
 # (Opcional) Email para errores del servidor
 SERVER_EMAIL = 'errors@suplementospro.com'
 
