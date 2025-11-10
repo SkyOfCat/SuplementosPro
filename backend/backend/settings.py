@@ -203,6 +203,7 @@ cloudinary.config(
   cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', 'dhhl65y0g'),
   api_key = os.getenv('CLOUDINARY_API_KEY', '279785294665981'),
   api_secret = os.getenv('CLOUDINARY_API_SECRET', 'hQraAy_iqzHj8f3OeuQPMQyhKEQ'),
+  secure=True
 )
 
 # Reemplaza la configuración de MEDIA con Cloudinary
