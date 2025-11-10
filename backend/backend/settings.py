@@ -1,10 +1,14 @@
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+import sys
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 import dj_database_url
 import os
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,7 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-rn^wf8k^r*b=cnond)l5f#=&1ho_eos4_lu)ptlz_&dw^6j2qk')
-
+DEBUG = os.environ.get('DEBUG', 'True')
 # SECURITY WARNING: don't run with debug turned on in production!
 if 'RENDER' in os.environ:
     DEBUG = False
@@ -33,28 +37,14 @@ ALLOWED_HOSTS = ['suplementospro.onrender.com', 'localhost', '127.0.0.1']
 
 # Configuración de emails
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'SuplementosPro <suplementospro.ventas@gmail.com>')
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # Motor de envío de emails
-EMAIL_HOST = 'smtp.gmail.com'  # Servidor de Gmail
-# EMAIL_HOST = 'smtp.office365.com'  # Para Outlook/Office365
-# EMAIL_HOST = 'smtp.mailgun.org'  # Para Mailgun
-# EMAIL_HOST = 'smtp.sendgrid.net'  # Para SendGrid
-EMAIL_PORT = 587  # Puerto para TLS (el más común)
-# EMAIL_PORT = 465  # Puerto para SSL
-EMAIL_USE_TLS = True  # Usar Transport Layer Security (recomendado)
-# EMAIL_USE_SSL = False  # No usar SSL si usas TLS
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')  # Tu email (quien envia el correo)
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # IMPORTANTE: No tu contraseña normal
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'SuplementosPro <suplementospro.ventas@gmail.com>')# Así aparecerá en los emails: "SuplementosPro <tu-email@gmail.com>"
-# (Opcional) Email para errores del servidor
-SERVER_EMAIL = 'errors@suplementospro.com'
-
-# settings.py (DESARROLLO)
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    # ... resto de configuración
 # Application definition
 
 INSTALLED_APPS = [
@@ -146,23 +136,28 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Detectar si estamos en desarrollo local
+IS_DEVELOPMENT = DEBUG and 'runserver' in sys.argv
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
-
-# Si dj_database_url.config() devuelve un diccionario vacío, usar SQLite
-if not DATABASES['default']:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+# Database configuration
+if IS_DEVELOPMENT:
+    # Siempre SQLite en desarrollo
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-
+else:
+    # PostgreSQL en producción
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 

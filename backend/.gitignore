@@ -1,0 +1,32 @@
+# Environments
+.env
+.env.local
+.env.production
+.env.staging
+
+# Django
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+
+# Database
+*.sqlite3
+*.db
+
+# Static files
+/staticfiles/
+/mediafiles/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
