@@ -5,6 +5,7 @@ import {
   getAuthHeadersFormData,
   getAuthHeadersJSON,
   buildUrl,
+  getImagenUrl,
 } from "../../config/api";
 import "../../styles/admin/EditarProteina.css";
 
@@ -34,7 +35,6 @@ const EditarProteina = () => {
   useEffect(() => {
     const cargarProteina = async () => {
       try {
-        // ✅ URL usando la configuración centralizada
         const response = await fetch(
           buildUrl(`${API_CONFIG.ENDPOINTS.PROTEINAS}${id}/`),
           {
@@ -44,7 +44,7 @@ const EditarProteina = () => {
 
         if (response.ok) {
           const datosProteina = await response.json();
-          console.log("Datos cargados:", datosProteina);
+          console.log("🔍 Datos cargados de la API:", datosProteina);
 
           setProteina(datosProteina);
           setFormData({
@@ -59,21 +59,26 @@ const EditarProteina = () => {
             imagen_nutricional: null,
           });
 
-          // Configurar imagen previa si existe
+          // ✅ CORRECCIÓN: Usar getImagenUrl para procesar las imágenes
           if (datosProteina.imagen) {
-            const imagenUrl = datosProteina.imagen.startsWith("http")
-              ? datosProteina.imagen
-              : `${API_CONFIG.BASE_URL}${datosProteina.imagen}`;
-            setImagenPrevia(imagenUrl);
+            const urlImagen = getImagenUrl(datosProteina.imagen);
+            console.log("🖼️ URL de imagen procesada:", urlImagen);
+            setImagenPrevia(urlImagen);
+          } else {
+            setImagenPrevia("");
           }
 
-          // Configurar imagen nutricional previa si existe
           if (datosProteina.imagen_nutricional) {
-            const imagenNutricionalUrl =
-              datosProteina.imagen_nutricional.startsWith("http")
-                ? datosProteina.imagen_nutricional
-                : `${API_CONFIG.BASE_URL}${datosProteina.imagen_nutricional}`;
-            setImagenNutricionalPrevia(imagenNutricionalUrl);
+            const urlImagenNutricional = getImagenUrl(
+              datosProteina.imagen_nutricional
+            );
+            console.log(
+              "📊 URL de imagen nutricional procesada:",
+              urlImagenNutricional
+            );
+            setImagenNutricionalPrevia(urlImagenNutricional);
+          } else {
+            setImagenNutricionalPrevia("");
           }
         } else if (response.status === 401) {
           localStorage.removeItem("access_token");
@@ -102,7 +107,7 @@ const EditarProteina = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "imagen") {
+    if (name === "imagen" && files && files[0]) {
       const file = files[0];
       setFormData((prev) => ({
         ...prev,
@@ -110,14 +115,12 @@ const EditarProteina = () => {
       }));
 
       // Crear URL previa para la nueva imagen
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImagenPrevia(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    } else if (name === "imagen_nutricional") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagenPrevia(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else if (name === "imagen_nutricional" && files && files[0]) {
       const file = files[0];
       setFormData((prev) => ({
         ...prev,
@@ -125,13 +128,11 @@ const EditarProteina = () => {
       }));
 
       // Crear URL previa para la nueva imagen nutricional
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImagenNutricionalPrevia(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagenNutricionalPrevia(e.target.result);
+      };
+      reader.readAsDataURL(file);
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -166,14 +167,6 @@ const EditarProteina = () => {
     }
 
     try {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        setMensaje("❌ Debes iniciar sesión para editar productos");
-        setLoading(false);
-        navigate("/login");
-        return;
-      }
-
       // Crear FormData para enviar archivos
       const formDataToSend = new FormData();
       formDataToSend.append("nombre", formData.nombre.trim());
@@ -184,62 +177,77 @@ const EditarProteina = () => {
       formDataToSend.append("precio", parseFloat(formData.precio));
       formDataToSend.append("stock", parseInt(formData.stock));
 
+      console.log("📤 Enviando datos...");
+      console.log("- Imagen nueva:", formData.imagen);
+      console.log("- Imagen nutricional nueva:", formData.imagen_nutricional);
+
       // Solo agregar la imagen si se seleccionó una nueva
-      if (formData.imagen) {
+      if (formData.imagen instanceof File) {
         formDataToSend.append("imagen", formData.imagen);
       }
 
       // Solo agregar la imagen nutricional si se seleccionó una nueva
-      if (formData.imagen_nutricional) {
+      if (formData.imagen_nutricional instanceof File) {
         formDataToSend.append(
           "imagen_nutricional",
           formData.imagen_nutricional
         );
       }
 
-      console.log("Enviando datos:", Object.fromEntries(formDataToSend));
+      // ✅ DEBUG: Mostrar qué se está enviando
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`📦 ${key}:`, value);
+      }
 
-      // ✅ URL usando la configuración centralizada
+      // ✅ Usar PATCH para actualizaciones parciales
       const response = await fetch(
         buildUrl(`${API_CONFIG.ENDPOINTS.PROTEINAS}${id}/`),
         {
-          method: "PUT",
+          method: "PATCH",
           headers: getAuthHeadersFormData(),
           body: formDataToSend,
         }
       );
 
+      console.log("📥 Respuesta del servidor:", response.status);
+
       if (response.ok) {
         const data = await response.json();
-        console.log("Producto actualizado:", data);
+        console.log("✅ Producto actualizado:", data);
         setMensaje("✅ Producto actualizado con éxito");
 
-        // Redirigir después de 2 segundos
         setTimeout(() => {
           navigate("/admin/productos");
         }, 2000);
-      } else if (response.status === 401) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        setMensaje("❌ Sesión expirada. Por favor, inicie sesión nuevamente.");
-        setTimeout(() => navigate("/login"), 2000);
-      } else if (response.status === 403) {
-        setMensaje("❌ No tienes permisos para editar productos");
       } else {
-        const errorData = await response.json();
-        console.error("Error del servidor:", errorData);
+        const errorData = await response.json().catch(() => ({}));
+        console.error("❌ Error del servidor:", errorData);
 
-        // Manejar errores específicos del backend
+        // Manejo específico de errores
         if (errorData.detail) {
           setMensaje(`❌ ${errorData.detail}`);
-        } else if (errorData.non_field_errors) {
-          setMensaje(`❌ ${errorData.non_field_errors.join(", ")}`);
+        } else if (errorData.imagen) {
+          setMensaje(
+            `❌ Error en la imagen: ${
+              Array.isArray(errorData.imagen)
+                ? errorData.imagen.join(", ")
+                : errorData.imagen
+            }`
+          );
+        } else if (errorData.imagen_nutricional) {
+          setMensaje(
+            `❌ Error en imagen nutricional: ${
+              Array.isArray(errorData.imagen_nutricional)
+                ? errorData.imagen_nutricional.join(", ")
+                : errorData.imagen_nutricional
+            }`
+          );
         } else {
-          setMensaje("❌ Error al actualizar el producto. Revisa los campos.");
+          setMensaje("❌ Error al actualizar el producto");
         }
       }
     } catch (error) {
-      console.error("Error de conexión:", error);
+      console.error("🌐 Error de conexión:", error);
       setMensaje("⚠️ Error de conexión al actualizar el producto");
     } finally {
       setLoading(false);

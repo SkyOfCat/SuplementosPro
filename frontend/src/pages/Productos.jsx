@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import {
-  API_CONFIG,
-  buildUrl,
-  getImagenUrl, // ✅ IMPORTAR LA FUNCIÓN CENTRALIZADA
-} from "../config/api";
+import { API_CONFIG, buildUrl, getImagenUrl } from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Productos.css";
@@ -30,84 +26,125 @@ function Productos() {
 
   const obtenerProductos = async () => {
     try {
+      setCargando(true);
+
       // ✅ URLs usando la configuración centralizada
-      const [
-        resProteinas,
-        resSnacks,
-        resCreatinas,
-        resAminoacidos,
-        resVitaminas,
-      ] = await Promise.all([
-        fetch(buildUrl(API_CONFIG.ENDPOINTS.PROTEINAS)),
-        fetch(buildUrl(API_CONFIG.ENDPOINTS.SNACKS)),
-        fetch(buildUrl(API_CONFIG.ENDPOINTS.CREATINAS)),
-        fetch(buildUrl(API_CONFIG.ENDPOINTS.AMINOACIDOS)),
-        fetch(buildUrl(API_CONFIG.ENDPOINTS.VITAMINAS)),
-      ]);
+      const endpoints = [
+        API_CONFIG.ENDPOINTS.PROTEINAS,
+        API_CONFIG.ENDPOINTS.SNACKS,
+        API_CONFIG.ENDPOINTS.CREATINAS,
+        API_CONFIG.ENDPOINTS.AMINOACIDOS,
+        API_CONFIG.ENDPOINTS.VITAMINAS,
+      ];
 
-      if (
-        resProteinas.ok &&
-        resSnacks.ok &&
-        resCreatinas.ok &&
-        resAminoacidos.ok &&
-        resVitaminas.ok
-      ) {
-        const proteinas = await resProteinas.json();
-        const snacks = await resSnacks.json();
-        const creatinas = await resCreatinas.json();
-        const aminoacidos = await resAminoacidos.json();
-        const vitaminas = await resVitaminas.json();
+      const responses = await Promise.all(
+        endpoints.map((endpoint) =>
+          fetch(buildUrl(endpoint)).then((res) => (res.ok ? res.json() : []))
+        )
+      );
 
-        const productosCombinados = [
-          ...proteinas.map((p) => ({
-            ...p,
-            tipo_producto: "Proteina",
-            categoria_filtro: "Proteina",
-            subcategoria: p.tipo || "Whey",
-          })),
-          ...snacks.map((s) => ({
-            ...s,
-            tipo_producto: "Snack",
-            categoria_filtro: "Snack",
-            subcategoria: "Snack",
-          })),
-          ...creatinas.map((c) => ({
-            ...c,
-            tipo_producto: "Creatina",
-            categoria_filtro: "Creatina",
-            subcategoria: "Creatina",
-          })),
-          ...aminoacidos.map((a) => ({
-            ...a,
-            tipo_producto: "Aminoacido",
-            categoria_filtro: "Aminoacido",
-            subcategoria: "Aminoacido",
-          })),
-          ...vitaminas.map((v) => ({
-            ...v,
-            tipo_producto: "Vitamina",
-            categoria_filtro: "Vitamina",
-            subcategoria: "Vitamina",
-          })),
-        ];
+      const [proteinas, snacks, creatinas, aminoacidos, vitaminas] = responses;
 
-        setProductos(productosCombinados);
-      } else {
-        console.error("Error al obtener productos");
-      }
+      // ✅ CORRECCIÓN: Crear IDs únicos para evitar duplicados
+      const productosCombinados = [
+        ...proteinas.map((p) => ({
+          ...p,
+          id: `proteina_${p.id}`, // ID único
+          tipo_producto: "Proteina",
+          categoria_filtro: "Proteina",
+          subcategoria: p.tipo || "Whey",
+        })),
+        ...snacks.map((s) => ({
+          ...s,
+          id: `snack_${s.id}`, // ID único
+          tipo_producto: "Snack",
+          categoria_filtro: "Snack",
+          subcategoria: "Snack",
+        })),
+        ...creatinas.map((c) => ({
+          ...c,
+          id: `creatina_${c.id}`, // ID único
+          tipo_producto: "Creatina",
+          categoria_filtro: "Creatina",
+          subcategoria: "Creatina",
+        })),
+        ...aminoacidos.map((a) => ({
+          ...a,
+          id: `aminoacido_${a.id}`, // ID único
+          tipo_producto: "Aminoacido",
+          categoria_filtro: "Aminoacido",
+          subcategoria: "Aminoacido",
+        })),
+        ...vitaminas.map((v) => ({
+          ...v,
+          id: `vitamina_${v.id}`, // ID único
+          tipo_producto: "Vitamina",
+          categoria_filtro: "Vitamina",
+          subcategoria: "Vitamina",
+        })),
+      ];
+
+      console.log("📦 Productos cargados:", {
+        total: productosCombinados.length,
+        proteinas: proteinas.length,
+        snacks: snacks.length,
+        creatinas: creatinas.length,
+        aminoacidos: aminoacidos.length,
+        vitaminas: vitaminas.length,
+      });
+
+      // ✅ CORRECCIÓN: Eliminar duplicados por ID único
+      const productosUnicos = eliminarDuplicados(productosCombinados);
+
+      console.log(
+        "✅ Productos únicos después de eliminar duplicados:",
+        productosUnicos.length
+      );
+
+      setProductos(productosUnicos);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error al obtener productos:", error);
     } finally {
       setCargando(false);
     }
   };
 
+  // ✅ NUEVA FUNCIÓN: Eliminar productos duplicados
+  const eliminarDuplicados = (productosArray) => {
+    const seen = new Set();
+    return productosArray.filter((producto) => {
+      // Usar el ID único para verificar duplicados
+      if (seen.has(producto.id)) {
+        console.warn(
+          "⚠️ Producto duplicado eliminado:",
+          producto.id,
+          producto.nombre
+        );
+        return false;
+      }
+      seen.add(producto.id);
+      return true;
+    });
+  };
+
   const aplicarFiltros = () => {
+    console.log("🔍 Aplicando filtros...", {
+      totalProductos: productos.length,
+      categoriaFiltro,
+      subcategoriaFiltro,
+      soloEnStock,
+    });
+
     let filtrados = [...productos];
 
+    // ✅ CORRECCIÓN: Aplicar filtros de manera más estricta
     if (categoriaFiltro !== "all") {
       filtrados = filtrados.filter(
         (producto) => producto.categoria_filtro === categoriaFiltro
+      );
+      console.log(
+        `📊 Después de filtro categoría "${categoriaFiltro}":`,
+        filtrados.length
       );
     }
 
@@ -115,18 +152,33 @@ function Productos() {
       filtrados = filtrados.filter(
         (producto) => producto.subcategoria === subcategoriaFiltro
       );
+      console.log(
+        `📊 Después de filtro subcategoría "${subcategoriaFiltro}":`,
+        filtrados.length
+      );
     }
 
     if (soloEnStock) {
+      const antesStock = filtrados.length;
       filtrados = filtrados.filter((producto) => producto.stock > 0);
+      console.log(
+        `📊 Después de filtro stock: ${antesStock} → ${filtrados.length}`
+      );
+    }
+
+    // ✅ DEBUG: Mostrar productos filtrados
+    if (categoriaFiltro === "Vitamina") {
+      console.log("🍎 Productos de vitamina filtrados:", filtrados);
     }
 
     setProductosFiltrados(filtrados);
   };
 
   const handleCategoriaChange = (e) => {
-    setCategoriaFiltro(e.target.value);
-    setSubcategoriaFiltro("all");
+    const nuevaCategoria = e.target.value;
+    console.log("🔄 Cambiando categoría a:", nuevaCategoria);
+    setCategoriaFiltro(nuevaCategoria);
+    setSubcategoriaFiltro("all"); // Resetear subcategoría
   };
 
   const handleSubcategoriaChange = (e) => {
@@ -138,6 +190,7 @@ function Productos() {
   };
 
   const limpiarFiltros = () => {
+    console.log("🧹 Limpiando filtros");
     setCategoriaFiltro("all");
     setSubcategoriaFiltro("all");
     setSoloEnStock(false);
@@ -183,19 +236,30 @@ function Productos() {
   const getDetailRoute = (producto) => {
     switch (producto.tipo_producto) {
       case "Proteina":
-        return `/proteina/${producto.id}`;
+        return `/proteina/${producto.id.replace("proteina_", "")}`;
       case "Snack":
-        return `/snack/${producto.id}`;
+        return `/snack/${producto.id.replace("snack_", "")}`;
       case "Creatina":
-        return `/creatina/${producto.id}`;
+        return `/creatina/${producto.id.replace("creatina_", "")}`;
       case "Aminoacido":
-        return `/aminoacido/${producto.id}`;
+        return `/aminoacido/${producto.id.replace("aminoacido_", "")}`;
       case "Vitamina":
-        return `/vitamina/${producto.id}`;
+        return `/vitamina/${producto.id.replace("vitamina_", "")}`;
       default:
         return "#";
     }
   };
+
+  // ✅ DEBUG: Mostrar información de depuración
+  if (import.meta.env.DEV) {
+    console.log("🔍 Estado actual:", {
+      productosTotal: productos.length,
+      productosFiltrados: productosFiltrados.length,
+      categoriaFiltro,
+      subcategoriaFiltro,
+      soloEnStock,
+    });
+  }
 
   if (cargando) {
     return (
@@ -224,6 +288,17 @@ function Productos() {
           </div>
         </div>
 
+        {/* ✅ DEBUG INFO - Solo en desarrollo */}
+        {/*{import.meta.env.DEV && (
+          <div className="alert alert-info mb-4">
+            <small>
+              <strong>Debug Info:</strong> Total: {productos.length} |
+              Filtrados: {productosFiltrados.length} | Categoría:{" "}
+              {categoriaFiltro} | Subcategoría: {subcategoriaFiltro}
+            </small>
+          </div>
+        )}*/}
+
         <div className="row">
           {/* Panel lateral de filtros */}
           <div className="col-lg-3 mb-4">
@@ -244,113 +319,40 @@ function Productos() {
               <div className="mb-4">
                 <h5 className="mb-3 text-dark">Categoría Principal</h5>
                 <div className="filter-options">
-                  <div className="form-check mb-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="categoryFilter"
-                      id="allProducts"
-                      value="all"
-                      checked={categoriaFiltro === "all"}
-                      onChange={handleCategoriaChange}
-                    />
-                    <label
-                      className="form-check-label text-dark"
-                      htmlFor="allProducts"
-                    >
-                      Todos los productos
-                    </label>
-                  </div>
-
-                  <div className="form-check mb-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="categoryFilter"
-                      id="proteinas"
-                      value="Proteina"
-                      checked={categoriaFiltro === "Proteina"}
-                      onChange={handleCategoriaChange}
-                    />
-                    <label
-                      className="form-check-label text-dark"
-                      htmlFor="proteinas"
-                    >
-                      Proteínas
-                    </label>
-                  </div>
-
-                  <div className="form-check mb-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="categoryFilter"
-                      id="snacks"
-                      value="Snack"
-                      checked={categoriaFiltro === "Snack"}
-                      onChange={handleCategoriaChange}
-                    />
-                    <label
-                      className="form-check-label text-dark"
-                      htmlFor="snacks"
-                    >
-                      Snacks
-                    </label>
-                  </div>
-
-                  <div className="form-check mb-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="categoryFilter"
-                      id="creatinas"
-                      value="Creatina"
-                      checked={categoriaFiltro === "Creatina"}
-                      onChange={handleCategoriaChange}
-                    />
-                    <label
-                      className="form-check-label text-dark"
-                      htmlFor="creatinas"
-                    >
-                      Creatinas
-                    </label>
-                  </div>
-
-                  <div className="form-check mb-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="categoryFilter"
-                      id="aminoacidos"
-                      value="Aminoacido"
-                      checked={categoriaFiltro === "Aminoacido"}
-                      onChange={handleCategoriaChange}
-                    />
-                    <label
-                      className="form-check-label text-dark"
-                      htmlFor="aminoacidos"
-                    >
-                      Aminoácidos
-                    </label>
-                  </div>
-
-                  <div className="form-check mb-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="categoryFilter"
-                      id="vitaminas"
-                      value="Vitamina"
-                      checked={categoriaFiltro === "Vitamina"}
-                      onChange={handleCategoriaChange}
-                    />
-                    <label
-                      className="form-check-label text-dark"
-                      htmlFor="vitaminas"
-                    >
-                      Vitaminas
-                    </label>
-                  </div>
+                  {[
+                    {
+                      id: "allProducts",
+                      value: "all",
+                      label: "Todos los productos",
+                    },
+                    { id: "proteinas", value: "Proteina", label: "Proteínas" },
+                    { id: "snacks", value: "Snack", label: "Snacks" },
+                    { id: "creatinas", value: "Creatina", label: "Creatinas" },
+                    {
+                      id: "aminoacidos",
+                      value: "Aminoacido",
+                      label: "Aminoácidos",
+                    },
+                    { id: "vitaminas", value: "Vitamina", label: "Vitaminas" },
+                  ].map((option) => (
+                    <div key={option.id} className="form-check mb-2">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="categoryFilter"
+                        id={option.id}
+                        value={option.value}
+                        checked={categoriaFiltro === option.value}
+                        onChange={handleCategoriaChange}
+                      />
+                      <label
+                        className="form-check-label text-dark"
+                        htmlFor={option.id}
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -359,77 +361,46 @@ function Productos() {
                 <div className="mb-4">
                   <h5 className="mb-3 text-dark">Tipo de Proteína</h5>
                   <div className="filter-options">
-                    <div className="form-check mb-2">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="subcategoryFilter"
-                        id="allProteins"
-                        value="all"
-                        checked={subcategoriaFiltro === "all"}
-                        onChange={handleSubcategoriaChange}
-                      />
-                      <label
-                        className="form-check-label text-dark"
-                        htmlFor="allProteins"
-                      >
-                        Todas las proteínas
-                      </label>
-                    </div>
-
-                    <div className="form-check mb-2">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="subcategoryFilter"
-                        id="wheyProtein"
-                        value="Whey"
-                        checked={subcategoriaFiltro === "Whey"}
-                        onChange={handleSubcategoriaChange}
-                      />
-                      <label
-                        className="form-check-label text-dark"
-                        htmlFor="wheyProtein"
-                      >
-                        Whey Protein
-                      </label>
-                    </div>
-
-                    <div className="form-check mb-2">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="subcategoryFilter"
-                        id="isolateProtein"
-                        value="Isolate"
-                        checked={subcategoriaFiltro === "Isolate"}
-                        onChange={handleSubcategoriaChange}
-                      />
-                      <label
-                        className="form-check-label text-dark"
-                        htmlFor="isolateProtein"
-                      >
-                        Isolated Protein
-                      </label>
-                    </div>
-
-                    <div className="form-check mb-2">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="subcategoryFilter"
-                        id="caseinProtein"
-                        value="Casein"
-                        checked={subcategoriaFiltro === "Casein"}
-                        onChange={handleSubcategoriaChange}
-                      />
-                      <label
-                        className="form-check-label text-dark"
-                        htmlFor="caseinProtein"
-                      >
-                        Casein Protein
-                      </label>
-                    </div>
+                    {[
+                      {
+                        id: "allProteins",
+                        value: "all",
+                        label: "Todas las proteínas",
+                      },
+                      {
+                        id: "wheyProtein",
+                        value: "Whey",
+                        label: "Whey Protein",
+                      },
+                      {
+                        id: "isolateProtein",
+                        value: "Isolate",
+                        label: "Isolated Protein",
+                      },
+                      {
+                        id: "caseinProtein",
+                        value: "Casein",
+                        label: "Casein Protein",
+                      },
+                    ].map((option) => (
+                      <div key={option.id} className="form-check mb-2">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="subcategoryFilter"
+                          id={option.id}
+                          value={option.value}
+                          checked={subcategoriaFiltro === option.value}
+                          onChange={handleSubcategoriaChange}
+                        />
+                        <label
+                          className="form-check-label text-dark"
+                          htmlFor={option.id}
+                        >
+                          {option.label}
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

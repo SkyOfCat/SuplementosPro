@@ -136,12 +136,46 @@ class ProteinaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proteina
         fields = '__all__'
+    
+    def to_representation(self, instance):
+        """Convierte CloudinaryField a URLs strings"""
+        representation = super().to_representation(instance)
+        
+        # Convertir CloudinaryField a URL string
+        if instance.imagen:
+            representation['imagen'] = instance.imagen.url
+        if instance.imagen_nutricional:
+            representation['imagen_nutricional'] = instance.imagen_nutricional.url
+            
+        return representation
+        
+    def validate_stock(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El stock no puede ser negativo")
+        return value
+    
+    def validate_precio(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El precio debe ser mayor a 0")
+        return value
 
 class SnackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Snack
         fields = '__all__'
-    
+     
+    def to_representation(self, instance):
+        """Convierte CloudinaryField a URLs strings"""
+        representation = super().to_representation(instance)
+        
+        # Convertir CloudinaryField a URL string
+        if instance.imagen:
+            representation['imagen'] = instance.imagen.url
+        if instance.imagen_nutricional:
+            representation['imagen_nutricional'] = instance.imagen_nutricional.url
+            
+        return representation
+
     def validate_stock(self, value):
         if value < 0:
             raise serializers.ValidationError("El stock no puede ser negativo")
@@ -156,16 +190,82 @@ class CreatinaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Creatina
         fields = '__all__'
+    
+    def to_representation(self, instance):
+        """Convierte CloudinaryField a URLs strings"""
+        representation = super().to_representation(instance)
+        
+        # Convertir CloudinaryField a URL string
+        if instance.imagen:
+            representation['imagen'] = instance.imagen.url
+        if instance.imagen_nutricional:
+            representation['imagen_nutricional'] = instance.imagen_nutricional.url
+            
+        return representation
+
+    def validate_stock(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El stock no puede ser negativo")
+        return value
+    
+    def validate_precio(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El precio debe ser mayor a 0")
+        return value
 
 class AminoacidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aminoacido
         fields = '__all__'
+    
+    def to_representation(self, instance):
+        """Convierte CloudinaryField a URLs strings"""
+        representation = super().to_representation(instance)
+        
+        # Convertir CloudinaryField a URL string
+        if instance.imagen:
+            representation['imagen'] = instance.imagen.url
+        if instance.imagen_nutricional:
+            representation['imagen_nutricional'] = instance.imagen_nutricional.url
+            
+        return representation
+
+    def validate_stock(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El stock no puede ser negativo")
+        return value
+    
+    def validate_precio(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El precio debe ser mayor a 0")
+        return value
 
 class VitaminaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vitamina
         fields = '__all__'
+    
+    def to_representation(self, instance):
+        """Convierte CloudinaryField a URLs strings"""
+        representation = super().to_representation(instance)
+        
+        # Convertir CloudinaryField a URL string
+        if instance.imagen:
+            representation['imagen'] = instance.imagen.url
+        if instance.imagen_nutricional:
+            representation['imagen_nutricional'] = instance.imagen_nutricional.url
+            
+        return representation
+
+    def validate_stock(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El stock no puede ser negativo")
+        return value
+    
+    def validate_precio(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El precio debe ser mayor a 0")
+        return value
 
 # --- --- --- --- --- #
 
