@@ -13,6 +13,16 @@ const GestionUsuarios = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Remover cualquier imagen de fondo del body
+    document.body.style.backgroundImage = "none";
+    document.body.style.background =
+      "linear-gradient(135deg, #aaaaaaff, #b3b3b3ff)";
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.minHeight = "100vh";
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+
     const obtenerUsuario = async () => {
       try {
         const token = localStorage.getItem("access_token");

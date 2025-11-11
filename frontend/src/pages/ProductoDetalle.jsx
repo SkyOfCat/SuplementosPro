@@ -27,6 +27,15 @@ function ProductoDetalle({ tipo }) {
       obtenerProducto();
     }
   }, [id, tipo]);
+  // Remover cualquier imagen de fondo del body
+  document.body.style.backgroundImage = "none";
+  document.body.style.background =
+    "linear-gradient(135deg, #aaaaaaff, #b3b3b3ff)";
+  document.body.style.backgroundSize = "cover";
+  document.body.style.backgroundAttachment = "fixed";
+  document.body.style.minHeight = "100vh";
+  document.body.style.margin = "0";
+  document.body.style.padding = "0";
 
   const getMiniaturaUrl = (imagenUrl) => {
     if (!imagenUrl || imagenUrl.includes("placeholder.com")) {

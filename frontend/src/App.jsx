@@ -11,7 +11,7 @@ function App() {
   const intervaloRef = useRef(null);
 
   const imagenes = [
-    "/images/backgrounds/dunkin-dymatize.jpg", // 1600x898
+    "/images/backgrounds/dunkin-dymatize.png", // 1600x898
     //"/images/backgrounds/optimum-nutrition.jpg", // 1024x971
     //"/images/backgrounds/ronnie-coleman.jpg", // 1500x1500
   ];
@@ -86,7 +86,7 @@ function App() {
       background-position: center center !important;
       background-repeat: no-repeat !important;
       background-attachment: fixed !important;
-      background-color: #1a1a1a !important; /* Fondo oscuro para mejor contraste */
+      background-color: #5f5f5fff !important; /* Fondo oscuro para mejor contraste */
       min-height: 100vh;
       margin: 0;
       padding: 0;
@@ -161,12 +161,12 @@ function App() {
     }
 
     .brand-highlight {
-      color: #ff6b35;
+      color: #00027cff;
       font-weight: 700;
     }
 
     .text-accent {
-      color: #ff6b35 !important;
+      color: #00027cff !important;
     }
 
     /* Botones */
@@ -181,7 +181,7 @@ function App() {
     }
 
     .hero-buttons .btn-primary {
-      background: linear-gradient(135deg, #ff6b35, #ff8e35);
+      background: linear-gradient(135deg, #00027cff, #ff8e35);
       box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
       color: white;
     }
@@ -199,8 +199,8 @@ function App() {
     }
 
     .hero-buttons .btn-outline-light:hover {
-      background: rgba(255, 255, 255, 0.9);
-      color: #212529;
+      background: #00027cff;
+      color: #ffffffff;
       transform: translateY(-3px);
     }
 
@@ -224,7 +224,7 @@ function App() {
     .feature-icon {
       font-size: 3rem;
       margin-bottom: 1.5rem;
-      background: linear-gradient(135deg, #ff6b35, #ff8e35);
+      background: linear-gradient(135deg, #00027cff, #ff8e35);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;

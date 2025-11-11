@@ -1,7 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
-import sys
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -37,7 +36,7 @@ ALLOWED_HOSTS = ['suplementospro.onrender.com', 'localhost', '127.0.0.1']
 
 # Configuración de emails
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend' # console
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -62,6 +61,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,7 +69,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
@@ -135,29 +134,30 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-# Detectar si estamos en desarrollo local
-IS_DEVELOPMENT = DEBUG and 'runserver' in sys.argv
-
 # Database configuration
-if IS_DEVELOPMENT:
-    # Siempre SQLite en desarrollo
+if DEBUG:
+    # PostgreSQL en desarrollo
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'suplementospro',
+            'USER': 'kotaro',
+            'PASSWORD': 'jmapm12a@',
+            'HOST': 'localhost',
+            'PORT': '5432',
         }
     }
 else:
-    # PostgreSQL en producción
+    # PostgreSQL en producción usando DATABASE_URL
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3'),
+            default=os.environ.get('DATABASE_URL'), # Base de datos Render
             conn_max_age=600,
             conn_health_checks=True,
         )
     }
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 

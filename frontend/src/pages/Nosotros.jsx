@@ -57,7 +57,7 @@ function Nosotros() {
         {/* Team Cards */}
         <div className="row justify-content-center">
           {/* Tarjeta de José */}
-          <div className="col-md-5 col-lg-4 mb-4">
+          <div className="col-md-5 col-lg-3 mb-4">
             <div className="team-card">
               <div className="card-header-bg"></div>
               <div className="team-img-container">
@@ -112,7 +112,7 @@ function Nosotros() {
                     </div>
                   </div>
                   <div className="skill-item">
-                    <span>HTML/CSS</span>
+                    <span>React</span>
                     <div className="progress">
                       <div
                         className="progress-bar"
@@ -133,7 +133,7 @@ function Nosotros() {
           </div>
 
           {/* Tarjeta de Luis */}
-          <div className="col-md-5 col-lg-4 mb-4">
+          <div className="col-md-5 col-lg-3 mb-4">
             <div className="team-card">
               <div className="card-header-bg"></div>
               <div className="team-img-container">
@@ -194,6 +194,158 @@ function Nosotros() {
                         className="progress-bar"
                         role="progressbar"
                         style={{ width: "70%" }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="contact-btn">
+                  <a href="#" className="btn btn-primary">
+                    <i className="fas fa-envelope me-2"></i>
+                    Contactar
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tarjeta de Tomás Torres */}
+          <div className="col-md-5 col-lg-3 mb-4">
+            <div className="team-card">
+              <div className="card-header-bg"></div>
+              <div className="team-img-container">
+                <div className="img-placeholder">
+                  <i className="fas fa-user"></i>
+                </div>
+                <div className="team-overlay">
+                  <div className="social-icons">
+                    <a href="#" className="social-link">
+                      <i className="fab fa-linkedin"></i>
+                    </a>
+                    <a href="#" className="social-link">
+                      <i className="fab fa-github"></i>
+                    </a>
+                    <a href="#" className="social-link">
+                      <i className="fab fa-twitter"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="team-info">
+                <h3>Tomás Torres</h3>
+                <p className="team-role">Ingeniero en Informática</p>
+                <div className="team-stats">
+                  <div className="stat-item">
+                    <i className="fas fa-graduation-cap text-accent"></i>
+                    <span>4to año de estudio y en curso</span>
+                  </div>
+                </div>
+              </div>
+              <div className="team-skills">
+                <h4>Habilidades Técnicas</h4>
+                <div className="skills">
+                  <div className="skill-item">
+                    <span>React</span>
+                    <div className="progress">
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: "88%" }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="skill-item">
+                    <span>JavaScript</span>
+                    <div className="progress">
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: "85%" }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="skill-item">
+                    <span>Vite</span>
+                    <div className="progress">
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: "80%" }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="contact-btn">
+                  <a href="#" className="btn btn-primary">
+                    <i className="fas fa-envelope me-2"></i>
+                    Contactar
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tarjeta de Camilo Morales */}
+          <div className="col-md-5 col-lg-3 mb-4">
+            <div className="team-card">
+              <div className="card-header-bg"></div>
+              <div className="team-img-container">
+                <div className="img-placeholder">
+                  <i className="fas fa-user"></i>
+                </div>
+                <div className="team-overlay">
+                  <div className="social-icons">
+                    <a href="#" className="social-link">
+                      <i className="fab fa-linkedin"></i>
+                    </a>
+                    <a href="#" className="social-link">
+                      <i className="fab fa-github"></i>
+                    </a>
+                    <a href="#" className="social-link">
+                      <i className="fab fa-twitter"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="team-info">
+                <h3>Camilo Morales</h3>
+                <p className="team-role">Ingeniero en Informática</p>
+                <div className="team-stats">
+                  <div className="stat-item">
+                    <i className="fas fa-graduation-cap text-accent"></i>
+                    <span>4to año de estudio y en curso</span>
+                  </div>
+                </div>
+              </div>
+              <div className="team-skills">
+                <h4>Habilidades Técnicas</h4>
+                <div className="skills">
+                  <div className="skill-item">
+                    <span>Django</span>
+                    <div className="progress">
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: "83%" }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="skill-item">
+                    <span>Python</span>
+                    <div className="progress">
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: "81%" }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="skill-item">
+                    <span>Bootstrap</span>
+                    <div className="progress">
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: "79%" }}
                       ></div>
                     </div>
                   </div>
