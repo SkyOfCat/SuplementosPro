@@ -7,7 +7,7 @@ import "../styles/Footer.css";
 
 // --- CONFIGURACIÓN DE URL DEL BACKEND ---
 // IMPORTANTE: Reemplaza esta URL con la tuya de Render sin la barra al final
-const API_URL = "https://suplementospro.onrender.com";
+const API_URL = "https://suplementos-pro-backend.onrender.com";
 
 // Remover cualquier imagen de fondo del body
 document.body.style.backgroundImage = "none";
@@ -45,16 +45,13 @@ function Pagar() {
 
     try {
       // CORRECCIÓN: Usamos API_URL y la ruta exacta de Django
-      const response = await fetch(
-        `${API_URL}/api/mercadopago/crear-preferencia/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/api/pagos/mercadopago/crear/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await response.json();
 
@@ -92,9 +89,10 @@ function Pagar() {
                 // 1. Crear la orden
                 createOrder={async (data, actions) => {
                   const token = localStorage.getItem("access_token");
-                  // CORRECCIÓN: Ruta absoluta a Render
+
+                  // CORRECCIÓN: Ruta exacta según tu urls.py
                   const response = await fetch(
-                    `${API_URL}/api/paypal/crear-orden/`,
+                    `${API_URL}/api/pagos/paypal/crear/`,
                     {
                       method: "POST",
                       headers: {
@@ -104,14 +102,15 @@ function Pagar() {
                     }
                   );
                   const order = await response.json();
-                  return order.id; // Devuelve el ID de orden de PayPal
+                  return order.id;
                 }}
                 // 2. Aprobar (Capturar) el pago
                 onApprove={async (data, actions) => {
                   const token = localStorage.getItem("access_token");
-                  // CORRECCIÓN: Ruta absoluta a Render
+
+                  // CORRECCIÓN: Ruta exacta según tu urls.py
                   const response = await fetch(
-                    `${API_URL}/api/paypal/capturar-orden/`,
+                    `${API_URL}/api/pagos/paypal/capturar/`,
                     {
                       method: "POST",
                       headers: {
