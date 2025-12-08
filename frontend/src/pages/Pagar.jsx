@@ -5,6 +5,10 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/Footer.css";
 
+// --- CONFIGURACIÓN DE URL DEL BACKEND ---
+// IMPORTANTE: Reemplaza esta URL con la tuya de Render sin la barra al final
+const API_URL = "https://suplementospro.onrender.com";
+
 // Remover cualquier imagen de fondo del body
 document.body.style.backgroundImage = "none";
 document.body.style.background =
@@ -14,6 +18,7 @@ document.body.style.backgroundAttachment = "fixed";
 document.body.style.minHeight = "100vh";
 document.body.style.margin = "0";
 document.body.style.padding = "0";
+
 // INICIALIZAR MERCADO PAGO (Pon tu Public Key aquí)
 initMercadoPago("APP_USR-1546c623-c220-4c67-9d10-48c3015a0156", {
   locale: "es-CL", // Idioma y formato de moneda chileno
@@ -24,53 +29,11 @@ function Pagar() {
   const [error, setError] = useState(null);
   const [preferenceId, setPreferenceId] = useState(null); // Estado para el ID de MP
 
-  const handleCheckout = async () => {
-    setLoading(true);
-    setError(null);
-    const token = localStorage.getItem("access_token");
-
-    try {
-      const response = await fetch("/api/pagos/crear-sesion-checkout/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // --- AQUÍ LA MEJORA ---
-      if (!response.ok) {
-        let errorMsg = `Error ${response.status}: ${response.statusText}`;
-        try {
-          // Intenta leer el error como JSON (lo que Django enviaría)
-          const errData = await response.json();
-          errorMsg = errData.error || JSON.stringify(errData);
-        } catch (jsonError) {
-          // Si falla (como ahora), es porque NO es JSON.
-          console.warn("La respuesta de error no fue JSON.");
-          // No hagas nada, errorMsg ya tiene el '503 Service Unavailable'
-        }
-        // Lanza el error para el bloque catch
-        throw new Error(errorMsg);
-      }
-      // --- FIN DE LA MEJORA ---
-
-      const session = await response.json();
-      window.location.href = session.url;
-    } catch (err) {
-      console.error("Error en checkout:", err);
-      // Ahora 'err.message' será "Error 503: Service Unavailable"
-      // en lugar del SyntaxError
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  // Opciones iniciales de PayPal (Pon tu Client ID de prueba aquí o en env)
+  // Opciones iniciales de PayPal
   const paypalOptions = {
     "client-id":
       "AbA0HmY0xRkx_DA7kl19RMuOToiOU9oREmd-ofYPCjccnhftMymW-KuwF8BezaRq7CbFxuDS_T0Pre2I",
-    currency: "USD", // PayPal suele requerir USD si no soporta tu moneda local
+    currency: "USD",
     intent: "capture",
   };
 
@@ -81,13 +44,17 @@ function Pagar() {
     const token = localStorage.getItem("access_token");
 
     try {
-      const response = await fetch("/api/pagos/mercadopago/crear/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // CORRECCIÓN: Usamos API_URL y la ruta exacta de Django
+      const response = await fetch(
+        `${API_URL}/api/mercadopago/crear-preferencia/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await response.json();
 
@@ -95,10 +62,11 @@ function Pagar() {
         setPreferenceId(data.preferenceId);
       } else {
         setError("No se pudo generar el pago con Mercado Pago");
+        console.error("Error MP:", data);
       }
     } catch (err) {
       console.error(err);
-      setError("Error de conexión");
+      setError("Error de conexión con el servidor");
     } finally {
       setLoading(false);
     }
@@ -124,29 +92,37 @@ function Pagar() {
                 // 1. Crear la orden
                 createOrder={async (data, actions) => {
                   const token = localStorage.getItem("access_token");
-                  const response = await fetch("/api/pagos/paypal/crear/", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                    },
-                  });
+                  // CORRECCIÓN: Ruta absoluta a Render
+                  const response = await fetch(
+                    `${API_URL}/api/paypal/crear-orden/`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  );
                   const order = await response.json();
                   return order.id; // Devuelve el ID de orden de PayPal
                 }}
                 // 2. Aprobar (Capturar) el pago
                 onApprove={async (data, actions) => {
                   const token = localStorage.getItem("access_token");
-                  const response = await fetch("/api/pagos/paypal/capturar/", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                      orderID: data.orderID,
-                    }),
-                  });
+                  // CORRECCIÓN: Ruta absoluta a Render
+                  const response = await fetch(
+                    `${API_URL}/api/paypal/capturar-orden/`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({
+                        orderID: data.orderID,
+                      }),
+                    }
+                  );
 
                   const details = await response.json();
 
