@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar"; // Asegúrate que la ruta sea correcta
+import Navbar from "../components/Navbar";
+import { buildUrl } from "../config/api";
 
 const PagoExitoso = () => {
   const location = useLocation();
@@ -30,7 +31,6 @@ const PagoExitoso = () => {
       setCargando(false);
       setMensaje("¡Pago con PayPal procesado correctamente!");
       setVentaInfo(ventaIdPayPal);
-      // Limpiar carrito visualmente si usas Context, o simplemente confiar en el backend
       return;
     }
 
@@ -60,17 +60,21 @@ const PagoExitoso = () => {
     const token = localStorage.getItem("access_token");
 
     try {
-      const response = await fetch("/api/pagos/mercadopago/confirmar/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          status: status,
-          payment_id: payment_id,
-        }),
-      });
+      // 2. CORRECCIÓN CRÍTICA: Usamos buildUrl para apuntar a Render
+      const response = await fetch(
+        buildUrl("/api/pagos/mercadopago/confirmar/"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: status,
+            payment_id: payment_id,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -79,7 +83,6 @@ const PagoExitoso = () => {
         setVentaInfo(data.venta_id);
       } else {
         setError(true);
-        // Mostrar el error específico que manda Django (ej: "Stock insuficiente")
         setMensaje(`Hubo un problema: ${data.error || "Error desconocido"}`);
       }
     } catch (err) {
@@ -120,7 +123,6 @@ const PagoExitoso = () => {
 
           {!cargando && !error && (
             <div className="mb-4">
-              {/* Icono Check Verde (FontAwesome) */}
               <i
                 className="fas fa-check-circle text-success"
                 style={{ fontSize: "5rem" }}
@@ -130,7 +132,6 @@ const PagoExitoso = () => {
 
           {!cargando && error && (
             <div className="mb-4">
-              {/* Icono Error Rojo */}
               <i
                 className="fas fa-times-circle text-danger"
                 style={{ fontSize: "5rem" }}
@@ -159,7 +160,7 @@ const PagoExitoso = () => {
                 className={`btn ${
                   error ? "btn-outline-danger" : "btn-primary"
                 } btn-lg`}
-                onClick={() => navigate("/mis-compras")} // O la ruta que prefieras
+                onClick={() => navigate("/mis-compras")}
               >
                 Ver mis pedidos
               </button>
