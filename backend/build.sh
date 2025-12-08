@@ -38,4 +38,3 @@ if su_email and su_pass:
 else:
     print('AVISO: No se creó superusuario. Faltan variables de entorno.')
 "
-"
