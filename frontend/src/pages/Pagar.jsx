@@ -7,7 +7,7 @@ import "../styles/Footer.css";
 
 // --- CONFIGURACIÓN DE URL DEL BACKEND ---
 // IMPORTANTE: Reemplaza esta URL con la tuya de Render sin la barra al final
-const API_URL = "https://suplementos-pro-backend.onrender.com";
+const API_URL = "https://suplementospro.onrender.com";
 
 // Remover cualquier imagen de fondo del body
 document.body.style.backgroundImage = "none";

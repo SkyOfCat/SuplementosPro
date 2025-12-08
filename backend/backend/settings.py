@@ -213,15 +213,11 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-# Stripe (Pago)
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET') # Para el webhook
-
-# PayPal (Pago 2)
+# PayPal (Pago 1)
 PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
 PAYPAL_SECRET_KEY = os.environ.get('PAYPAL_SECRET_KEY')
 
-# MercadoPago (Pago 3 CLP)
+# MercadoPago (Pago 2 CLP)
 MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN')
 MERCADOPAGO_PUBLIC_KEY = os.environ.get('MERCADOPAGO_PUBLIC_KEY')
 
@@ -244,5 +240,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://suplementos-pro-shop.netlify.app",
     "http://localhost:5173",
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://suplementos-pro-shop.netlify.app",
+]
+
 CORS_ALLOW_CREDENTIALS = True 
 CORS_ALLOW_ALL_ORIGINS = True
