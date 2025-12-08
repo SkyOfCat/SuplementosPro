@@ -1,6 +1,9 @@
 // Configuración de la API
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  BASE_URL: import.meta.env.DEV
+    ? "http://localhost:8000"
+    : "https://suplementospro.onrender.com",
+
   ENDPOINTS: {
     // Autenticación JWT
     TOKEN: "/api/token/",
@@ -21,6 +24,9 @@ export const API_CONFIG = {
     PASSWORD_RESET_REQUEST: "/api/password-reset/request/",
     PASSWORD_RESET_CONFIRM: "/api/password-reset/confirm/",
     PASSWORD_RESET_VALIDATE: "/api/password-reset/validate-token/",
+
+    // Endpoints compras
+    MIS_COMPRAS: "/api/mis-compras/",
   },
   TIMEOUT: 10000,
 };
