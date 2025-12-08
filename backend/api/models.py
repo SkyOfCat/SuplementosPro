@@ -239,8 +239,8 @@ class Venta(models.Model):
         return f"Folio: {self.folio} - {self.cliente.nombre}"
     
     def calcular_total(self):
-        detalles = self.detalleventa_set.all()
-        return sum(detalle.subTotal for detalle in detalles) if detalles.exists() else 0  
+        detalles = self.detalles.all() 
+        return sum(detalle.subTotal for detalle in detalles) if detalles.exists() else 0 
       
     def save(self, *args, **kwargs):
         force_recalculate = kwargs.pop('force_recalculate', False)
