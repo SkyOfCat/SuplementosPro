@@ -1,0 +1,72 @@
+.footer-home {
+  background: rgba(0, 0, 0, 0.85); /* Fondo oscuro transparente */
+  padding: 3rem 0 1rem 0;
+  margin-top: auto;
+  backdrop-filter: blur(15px); /* Efecto vidrio borroso */
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.bg-dark-glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ls-1 {
+  letter-spacing: 1px;
+  font-size: 0.85rem;
+}
+
+/* Input Newsletter Transparente */
+.footer-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.footer-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footer-input:focus {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: #ffc107 !important; /* Color warning */
+  box-shadow: none !important;
+}
+
+/* Enlaces Hover */
+.hover-accent:hover {
+  color: #ffc107 !important; /* Amarillo al pasar el mouse */
+  padding-left: 5px;
+  transition: all 0.3s ease;
+}
+
+/* Chatbot Flotante */
+.chatbot-float {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Ajuste móvil */
+@media (max-width: 768px) {
+  .chatbot-float {
+    bottom: 20px;
+    right: 20px;
+  }
+}

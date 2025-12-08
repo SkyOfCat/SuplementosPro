@@ -4,6 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import Usuario, Carrito, ItemCarrito, Creatina, Aminoacido, Vitamina, PasswordResetToken
+from .models import Venta, DetalleVenta, Carrito, ItemCarrito
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -307,15 +308,27 @@ class CarritoSerializer(serializers.ModelSerializer):
 
 # --- DETALLE VENTA --- #
 class DetalleVentaSerializer(serializers.ModelSerializer):
+    nombre_producto = serializers.SerializerMethodField()
+    
     class Meta:
         model = DetalleVenta
-        fields = ['proteina', 'snack', 'cantidad', 'precio_unitario', 'subTotal']
+        # Agregamos 'id' por si React necesita una key única
+        fields = ['id', 'cantidad', 'precio_unitario', 'subTotal', 'nombre_producto']
+
+    def get_nombre_producto(self, obj):
+        # Esta lógica está bien, pero depende de que los modelos relacionados existan
+        producto = obj.get_producto() 
+        try:
+            return producto.nombre if producto else "Producto no disponible"
+        except AttributeError:
+            return "Error en nombre de producto"
 
 class VentaSerializer(serializers.ModelSerializer):
+    # Usamos source='detalleventa_set' porque no definiste related_name en el modelo
     detalles = DetalleVentaSerializer(many=True, read_only=True)
 
     class Meta:
         model = Venta
-        fields = ['id', 'folio', 'cliente', 'fecha', 'total', 'detalles']
+        fields = ['folio', 'id_transaccion', 'fecha', 'total', 'detalles']
 
 # --- --- --- --- --- #

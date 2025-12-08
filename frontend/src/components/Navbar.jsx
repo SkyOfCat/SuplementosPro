@@ -21,7 +21,6 @@ function Navbar() {
         return;
       }
 
-      // ✅ URL usando la configuración centralizada
       const res = await fetch(buildUrl(API_CONFIG.ENDPOINTS.USUARIO_ACTUAL), {
         headers: getAuthHeadersJSON(),
       });
@@ -30,10 +29,8 @@ function Navbar() {
         const data = await res.json();
         setUsuario(data);
       } else if (res.status === 401) {
-        // Token expirado, intentar refresh
         const nuevoToken = await refrescarToken();
         if (nuevoToken) {
-          // Reintentar con nuevo token
           await obtenerUsuario();
         } else {
           localStorage.removeItem("access_token");
@@ -98,9 +95,53 @@ function Navbar() {
       style={{ backgroundColor: "rgba(41, 43, 44, 0.9)" }}
     >
       <div className="container">
-        <Link className="navbar-brand" to="/">
-          <i className="fas fa-dumbbell me-2"></i>SuplementosPro
+        {/* --- INICIO DEL LOGO NUEVO --- */}
+        <Link className="navbar-brand p-0" to="/">
+          <svg
+            width="auto"
+            height="45" // Ajusta la altura aquí si lo ves muy grande o chico
+            viewBox="0 0 320 60"
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-label="SuplementosPro Logo"
+            style={{ display: "block" }} // Asegura que no tenga márgenes extraños
+          >
+            {/* Texto SUPLEMENTOS (Gris claro/blanco para que se vea en tu navbar oscura) */}
+            <text
+              x="5"
+              y="40"
+              fontWeight="800"
+              fontSize="28"
+              fill="#f8f9fa" // Cambiado a blanco/gris claro para tu fondo oscuro
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                textTransform: "uppercase",
+                letterSpacing: "-2px",
+              }}
+            >
+              SUPLEMENTOS
+            </text>
+
+            {/* Grupo PRO (Azul eléctrico y cursiva) */}
+            <g transform="translate(215, 0)">
+              {/* Texto PRO */}
+              <text
+                x="0"
+                y="40"
+                fontWeight="900"
+                fontStyle="italic"
+                fontSize="28"
+                fill="#0d6efd" // Azul Bootstrap
+                style={{ fontFamily: "'Montserrat', sans-serif" }}
+              >
+                PRO
+              </text>
+              {/* Elemento gráfico de rayo/subrayado debajo de PRO */}
+              <path d="M 5,48 L 65,45 L 60,55 L 0,58 Z" fill="#0d6efd" />
+            </g>
+          </svg>
         </Link>
+        {/* --- FIN DEL LOGO NUEVO --- */}
 
         <button
           className="navbar-toggler"
@@ -149,7 +190,7 @@ function Navbar() {
               </Link>
             </li>
 
-            {/* MENÚ ADMIN */}
+            {/* MENÚ ADMIN NAV PRINCIPAL */}
             {usuario && usuario.is_admin && (
               <li className="nav-item dropdown">
                 <a
@@ -204,16 +245,23 @@ function Navbar() {
                   )}
                 </button>
                 <ul className="dropdown-menu">
-                  <li>
-                    <Link className="dropdown-item" to="/perfil">
-                      <i className="fas fa-user me-2"></i>Mi Perfil
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/pedidos">
-                      <i className="fas fa-shopping-bag me-2"></i>Mis Pedidos
-                    </Link>
-                  </li>
+                  {/* MODIFICACIÓN AQUÍ: Solo se muestran si NO es admin */}
+                  {!usuario.is_admin && (
+                    <>
+                      <li>
+                        <Link className="dropdown-item" to="/perfil-cliente">
+                          <i className="fas fa-user me-2"></i>Mi Perfil
+                        </Link>
+                      </li>
+                      <li>
+                        <Link className="dropdown-item" to="/mis-compras">
+                          <i className="fas fa-shopping-bag me-2"></i>Mis
+                          Pedidos
+                        </Link>
+                      </li>
+                    </>
+                  )}
+
                   {usuario.is_admin && (
                     <>
                       <li>

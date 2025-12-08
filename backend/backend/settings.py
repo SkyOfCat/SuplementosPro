@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -5,7 +6,7 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 import dj_database_url
-import os
+
 
 load_dotenv()
 
@@ -17,8 +18,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-rn^wf8k^r*b=cnond)l5f#=&1ho_eos4_lu)ptlz_&dw^6j2qk')
-DEBUG = os.environ.get('DEBUG', 'True')
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DEBUG = os.environ.get('DEBUG')
 # SECURITY WARNING: don't run with debug turned on in production!
 if 'RENDER' in os.environ:
     DEBUG = False
@@ -35,14 +36,14 @@ if not DEBUG:
 ALLOWED_HOSTS = ['suplementospro.onrender.com', 'localhost', '127.0.0.1']
 
 # Configuración de emails
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+FRONTEND_URL = os.environ.get('FRONTEND_URL')
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend' # console
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'SuplementosPro <suplementospro.ventas@gmail.com>')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 
 # Application definition
 
@@ -139,12 +140,12 @@ if DEBUG:
     # PostgreSQL en desarrollo
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'suplementospro',
-            'USER': 'kotaro',
-            'PASSWORD': 'jmapm12a@',
-            'HOST': 'localhost',
-            'PORT': '5432',
+            'ENGINE': os.environ.get('DATABASE_ENGINE'),
+            'NAME': os.environ.get('DATABASE_NAME'),
+            'USER': os.environ.get('DATABASE_USER'),
+            'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
+            'HOST': os.environ.get('DATABASE_HOST'),
+            'PORT': os.environ.get('DATABASE_PORT'),
         }
     }
 else:
@@ -200,9 +201,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media files (uploads)
 # Cloudinary configuration
 cloudinary.config( 
-  cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', 'dhhl65y0g'),
-  api_key = os.getenv('CLOUDINARY_API_KEY', '279785294665981'),
-  api_secret = os.getenv('CLOUDINARY_API_SECRET', 'hQraAy_iqzHj8f3OeuQPMQyhKEQ'),
+  cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
+  api_key = os.getenv('CLOUDINARY_API_KEY'),
+  api_secret = os.getenv('CLOUDINARY_API_SECRET'),
   secure=True
 )
 
@@ -211,6 +212,18 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
+# Stripe (Pago)
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET') # Para el webhook
+
+# PayPal (Pago 2)
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
+PAYPAL_SECRET_KEY = os.environ.get('PAYPAL_SECRET_KEY')
+
+# MercadoPago (Pago 3 CLP)
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN')
+MERCADOPAGO_PUBLIC_KEY = os.environ.get('MERCADOPAGO_PUBLIC_KEY')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

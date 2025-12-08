@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../src/styles/App.css";
@@ -468,15 +469,13 @@ function App() {
                 <i className="fab fa-tiktok"></i>
               </a>
             </div>
-            <p className="mb-2 text-white">
-              &copy; 2025 SuplementosPro - Todos los derechos reservados
-            </p>
             <p className="mb-0 text-light">
               Desarrollado con <i className="fas fa-heart text-danger"></i> para
               la comunidad fitness
             </p>
           </div>
         </footer>
+        <Footer />
       </div>
     </>
   );

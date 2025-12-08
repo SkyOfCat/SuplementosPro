@@ -225,6 +225,7 @@ class Vitamina(models.Model):
 # --- VENTAS --- #
 class Venta(models.Model):
     folio = models.AutoField(primary_key=True, db_column='idFolio')
+    id_transaccion = models.CharField(max_length=100, null=True, blank=True, db_column='idTransaccion') # Mercado Pago
     fecha = models.DateField(auto_now_add=True) 
     cliente = models.ForeignKey(Usuario, on_delete=models.CASCADE, db_column='idCliente', limit_choices_to={'is_admin': False})
     total = models.PositiveIntegerField(default=0)
@@ -239,18 +240,21 @@ class Venta(models.Model):
     
     def calcular_total(self):
         detalles = self.detalleventa_set.all()
-        return sum(detalle.subTotal for detalle in detalles) if detalles.exists() else 0
-    
+        return sum(detalle.subTotal for detalle in detalles) if detalles.exists() else 0  
+      
     def save(self, *args, **kwargs):
-        if not self.total or kwargs.pop('force_recalculate', False):
+        force_recalculate = kwargs.pop('force_recalculate', False)
+        
+        if self.pk and (not self.total or force_recalculate):
             self.total = self.calcular_total()
+            
         super().save(*args, **kwargs)
         
 # --- --- --- --- --- #
 
 # --- DETALLE VENTAS --- #
 class DetalleVenta(models.Model):
-    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, db_column='idVenta')
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, db_column='idVenta', related_name='detalles')
     proteina = models.ForeignKey(Proteina, on_delete=models.CASCADE, null=True, blank=True, db_column='idProteina')
     snack = models.ForeignKey(Snack, on_delete=models.CASCADE, null=True, blank=True, db_column='idSnack')
     creatina = models.ForeignKey(Creatina, on_delete=models.CASCADE, null=True, blank=True, db_column='idCreatina')

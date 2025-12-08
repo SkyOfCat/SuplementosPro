@@ -1,0 +1,101 @@
+:root {
+  --primary-color: #2127e6;
+  --accent-color: #4ecdc4;
+  --dark-color: #1a1f36;
+  --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.pedidos-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-wrapper {
+  flex: 1;
+}
+
+.text-accent {
+  color: var(--accent-color);
+}
+
+/* Tarjeta de Pedido */
+.order-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.order-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(33, 39, 230, 0.1);
+}
+
+/* Cabecera de la Tarjeta (Gradiente) */
+.order-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+  padding: 1.2rem 1.5rem;
+}
+
+/* Cuerpo de la Tarjeta */
+.order-body {
+  background-color: #fff;
+}
+
+/* Tabla de items */
+.order-item-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.order-item-row:last-child {
+  border-bottom: none;
+}
+
+.order-item-row td {
+  padding: 12px 5px;
+}
+
+/* Footer de la Tarjeta */
+.order-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.order-total-price {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
+/* Estado Vacío */
+.empty-state {
+  border: 2px dashed #e0e0e0 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .order-header .text-end {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  .order-footer {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-end !important;
+  }
+
+  .order-footer .text-muted {
+    width: 100%;
+    text-align: left;
+  }
+}

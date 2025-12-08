@@ -2,3 +2,6 @@ https://dashboard.render.com/login
 https://app.netlify.com/
 https://cloudinary.com/
 https://github.com/login
+https://stripe.com/es
+https://developer.paypal.com/home/
+https://www.mercadopago.cl/developers/es

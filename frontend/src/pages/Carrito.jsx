@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import {
   API_CONFIG,
   getAuthHeadersJSON,
@@ -11,6 +12,7 @@ import {
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Carrito.css";
+import "../styles/Footer.css";
 
 function Carrito() {
   const [carritoCompras, setCarritoCompras] = useState([]);
@@ -20,6 +22,7 @@ function Carrito() {
   const [erroresImagen, setErroresImagen] = useState({});
 
   useEffect(() => {
+    document.body.style.backgroundImage = "none";
     obtenerCarrito();
   }, []);
 
@@ -450,6 +453,7 @@ function Carrito() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

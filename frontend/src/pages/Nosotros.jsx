@@ -1,29 +1,29 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../styles/Nosotros.css";
+import "../styles/Footer.css";
 
 function Nosotros() {
   // Estado para controlar si estamos en la página Nosotros
   const [enNosotros, setEnNosotros] = useState(true);
 
   useEffect(() => {
-    // Remover cualquier imagen de fondo del body
+    // Reseteamos márgenes y aseguramos altura mínima y color base claro.
     document.body.style.backgroundImage = "none";
-    document.body.style.background =
-      "linear-gradient(135deg, #1a1f36, #2d3748)";
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.backgroundColor = "#eef2f5";
     document.body.style.minHeight = "100vh";
     document.body.style.margin = "0";
     document.body.style.padding = "0";
 
     return () => {
-      // Cleanup cuando el componente se desmonte
+      // Cleanup
       document.body.style.background = "";
       document.body.style.backgroundImage = "";
+      document.body.style.backgroundColor = "";
     };
   }, []);
 
@@ -38,11 +38,11 @@ function Nosotros() {
         <div className="row justify-content-center mb-5">
           <div className="col-12 text-center">
             <div className="nosotros-header">
-              <h1 className="display-4 fw-bold text-white mb-3">
+              <h1 className="display-4 fw-bold mb-3">
                 <i className="fas fa-users me-2 text-accent"></i>
                 Nuestro Equipo
               </h1>
-              <p className="lead text-light mb-4">
+              <p className="lead text-muted mb-4">
                 Conoce a los desarrolladores detrás de SuplementosPro
               </p>
               <div className="header-divider">
@@ -64,19 +64,7 @@ function Nosotros() {
                 <div className="img-placeholder">
                   <i className="fas fa-user"></i>
                 </div>
-                <div className="team-overlay">
-                  <div className="social-icons">
-                    <a href="#" className="social-link">
-                      <i className="fab fa-linkedin"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-github"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-twitter"></i>
-                    </a>
-                  </div>
-                </div>
+                {/* SE ELIMINÓ EL BLOQUE 'team-overlay' CON LOS ICONOS AQUÍ */}
               </div>
               <div className="team-info">
                 <h3>José Miguel Pérez</h3>
@@ -140,19 +128,7 @@ function Nosotros() {
                 <div className="img-placeholder">
                   <i className="fas fa-user"></i>
                 </div>
-                <div className="team-overlay">
-                  <div className="social-icons">
-                    <a href="#" className="social-link">
-                      <i className="fab fa-linkedin"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-github"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-twitter"></i>
-                    </a>
-                  </div>
-                </div>
+                {/* SE ELIMINÓ EL BLOQUE 'team-overlay' CON LOS ICONOS AQUÍ */}
               </div>
               <div className="team-info">
                 <h3>Luis Vargas</h3>
@@ -216,19 +192,7 @@ function Nosotros() {
                 <div className="img-placeholder">
                   <i className="fas fa-user"></i>
                 </div>
-                <div className="team-overlay">
-                  <div className="social-icons">
-                    <a href="#" className="social-link">
-                      <i className="fab fa-linkedin"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-github"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-twitter"></i>
-                    </a>
-                  </div>
-                </div>
+                {/* SE ELIMINÓ EL BLOQUE 'team-overlay' CON LOS ICONOS AQUÍ */}
               </div>
               <div className="team-info">
                 <h3>Tomás Torres</h3>
@@ -292,19 +256,7 @@ function Nosotros() {
                 <div className="img-placeholder">
                   <i className="fas fa-user"></i>
                 </div>
-                <div className="team-overlay">
-                  <div className="social-icons">
-                    <a href="#" className="social-link">
-                      <i className="fab fa-linkedin"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-github"></i>
-                    </a>
-                    <a href="#" className="social-link">
-                      <i className="fab fa-twitter"></i>
-                    </a>
-                  </div>
-                </div>
+                {/* SE ELIMINÓ EL BLOQUE 'team-overlay' CON LOS ICONOS AQUÍ */}
               </div>
               <div className="team-info">
                 <h3>Camilo Morales</h3>
@@ -365,20 +317,20 @@ function Nosotros() {
         <div className="row mt-5">
           <div className="col-12">
             <div className="about-project">
-              <h3 className="text-center text-white mb-4">Sobre el Proyecto</h3>
+              <h3 className="text-center mb-4">Sobre el Proyecto</h3>
               <div className="row">
                 <div className="col-md-4 text-center mb-4">
                   <div className="project-feature">
                     <i className="fas fa-code feature-icon"></i>
-                    <h5 className="text-white mt-3">Tecnologías</h5>
-                    <p className="text-light">React, Django, Bootstrap</p>
+                    <h5 className="mt-3">Tecnologías</h5>
+                    <p className="text-muted">React, Django, Bootstrap</p>
                   </div>
                 </div>
                 <div className="col-md-4 text-center mb-4">
                   <div className="project-feature">
                     <i className="fas fa-rocket feature-icon"></i>
-                    <h5 className="text-white mt-3">Propósito</h5>
-                    <p className="text-light">
+                    <h5 className="mt-3">Propósito</h5>
+                    <p className="text-muted">
                       Plataforma de e-commerce fitness
                     </p>
                   </div>
@@ -386,8 +338,8 @@ function Nosotros() {
                 <div className="col-md-4 text-center mb-4">
                   <div className="project-feature">
                     <i className="fas fa-graduation-cap feature-icon"></i>
-                    <h5 className="text-white mt-3">Educación</h5>
-                    <p className="text-light">
+                    <h5 className="mt-3">Educación</h5>
+                    <p className="text-muted">
                       Proyecto académico universitario
                     </p>
                   </div>
@@ -397,6 +349,7 @@ function Nosotros() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

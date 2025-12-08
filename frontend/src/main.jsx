@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
 import Login from "./pages/Login.jsx";
+import PerfilCliente from "./pages/PerfilCliente.jsx";
+import Pedidos from "./pages/Pedidos.jsx";
 import RecuperarContrasena from "./pages/RecuperarContrasena.jsx";
 import ResetearContrasena from "./pages/ResetarContrasena.jsx";
 import Productos from "./pages/Productos.jsx";
@@ -30,6 +32,10 @@ import EditarVitamina from "./pages/admin/EditarVitamina.jsx";
 import AgregarUsuario from "./pages/admin/AgregarUsuario.jsx";
 import EditarUsuario from "./pages/admin/EditarUsuario.jsx";
 
+/* Pagos */
+import Pagar from "./pages/Pagar.jsx";
+import PagoExitoso from "./pages/PagoExitoso.jsx";
+
 {
   /*------------------------------------------------------ */
 }
@@ -42,6 +48,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/perfil-cliente" element={<PerfilCliente />} />
+      <Route path="/mis-compras" element={<Pedidos />} />
       <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
       <Route
         path="/resetear-contrasena/:token"
@@ -94,6 +102,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         path="/vitamina/:id"
         element={<ProductoDetalle tipo="vitamina" />}
       />
+
+      {/* */}
+      {/* Pago */}
+      <Route path="/pagar" element={<Pagar />} />
+      <Route path="/pago-exitoso" element={<PagoExitoso />} />
       {/* */}
       <Route path="/registro" element={<Registro />} />
     </Routes>

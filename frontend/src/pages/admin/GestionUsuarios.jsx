@@ -419,23 +419,6 @@ const GestionUsuarios = () => {
             </Link>
           </div>
         )}
-
-        <div className="row mt-4">
-          <div className="col-12">
-            <div className="card bg-dark border-accent">
-              <div className="card-body text-center">
-                <small className="text-muted">
-                  <i className="fas fa-info-circle me-1"></i>
-                  Total de usuarios: <strong>{usuarios.length}</strong> |
-                  Administradores:{" "}
-                  <strong>{usuarios.filter((u) => u.is_admin).length}</strong> |
-                  Clientes:{" "}
-                  <strong>{usuarios.filter((u) => !u.is_admin).length}</strong>
-                </small>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

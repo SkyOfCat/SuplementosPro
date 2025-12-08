@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://suplementospro.onrender.com",
+        target: "http://127.0.0.1:8000",
+        //target: "https://suplementospro.onrender.com",
         changeOrigin: true,
       },
     },

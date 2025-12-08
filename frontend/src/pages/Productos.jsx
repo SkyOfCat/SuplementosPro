@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import { API_CONFIG, buildUrl, getImagenUrl } from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -21,6 +22,7 @@ function Productos() {
   }, []);
 
   useEffect(() => {
+    document.body.style.backgroundImage = "none";
     aplicarFiltros();
   }, [productos, categoriaFiltro, subcategoriaFiltro, soloEnStock]);
 
@@ -554,6 +556,7 @@ function Productos() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

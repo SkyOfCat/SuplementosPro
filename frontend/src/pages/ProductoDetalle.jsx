@@ -5,8 +5,8 @@ import {
   API_CONFIG,
   getAuthHeadersJSON,
   buildUrl,
-  getImagenUrl, // ✅ IMPORTAR FUNCIÓN CLOUDINARY
-  getImagenOptimizada, // ✅ PARA IMÁGENES OPTIMIZADAS
+  getImagenUrl,
+  getImagenOptimizada,
 } from "../config/api";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/ProductoDetalle.css";
@@ -22,35 +22,58 @@ function ProductoDetalle({ tipo }) {
   const [imagenActiva, setImagenActiva] = useState(0);
   const [erroresImagen, setErroresImagen] = useState({});
 
+  // ✅ NUEVO ESTADO PARA VERIFICAR ROL
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     if (tipo && id) {
       obtenerProducto();
+      verificarUsuario(); // ✅ VERIFICAMOS EL ROL AL CARGAR
     }
   }, [id, tipo]);
+
   // Remover cualquier imagen de fondo del body
   document.body.style.backgroundImage = "none";
-  document.body.style.background =
-    "linear-gradient(135deg, #aaaaaaff, #b3b3b3ff)";
+  document.body.style.backgroundColor = "#eef2f5";
   document.body.style.backgroundSize = "cover";
   document.body.style.backgroundAttachment = "fixed";
   document.body.style.minHeight = "100vh";
   document.body.style.margin = "0";
   document.body.style.padding = "0";
 
+  // ✅ FUNCIÓN PARA SABER SI ES ADMIN
+  const verificarUsuario = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const res = await fetch(buildUrl(API_CONFIG.ENDPOINTS.USUARIO_ACTUAL), {
+        headers: getAuthHeadersJSON(),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Si el usuario es admin, actualizamos el estado
+        if (data.is_admin) {
+          setIsAdmin(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error verificando usuario:", error);
+    }
+  };
+
   const getMiniaturaUrl = (imagenUrl) => {
     if (!imagenUrl || imagenUrl.includes("placeholder.com")) {
       return "https://via.placeholder.com/100x100/4A5568/FFFFFF?text=Miniatura";
     }
 
-    // Si ya es una URL de Cloudinary, aplicar transformación para miniatura
     if (imagenUrl.includes("cloudinary.com")) {
       return imagenUrl.replace(
         "/upload/",
         "/upload/w_100,h_100,c_fill,q_auto,f_auto/"
       );
     }
-
-    // Para cualquier otra URL, devolverla tal cual
     return imagenUrl;
   };
 
@@ -79,13 +102,11 @@ function ProductoDetalle({ tipo }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("📦 Producto cargado:", data); // Debug
         setProducto(data);
       } else if (response.status === 404) {
         setMensaje("❌ Producto no encontrado");
         setTipoMensaje("error");
       } else {
-        console.error("Error cargando producto. Status:", response.status);
         setMensaje("⚠️ Error al cargar el producto");
         setTipoMensaje("error");
       }
@@ -98,36 +119,32 @@ function ProductoDetalle({ tipo }) {
     }
   };
 
-  // ✅ FUNCIÓN ACTUALIZADA CON CLOUDINARY
   const getImagenesProducto = () => {
     if (!producto) return [];
 
     const imagenes = [];
 
-    // Imagen principal optimizada (más grande para detalle)
     if (producto.imagen) {
       imagenes.push({
-        url: getImagenOptimizada(producto.imagen, 600, 600), // ✅ Tamaño mayor para detalle
+        url: getImagenOptimizada(producto.imagen, 600, 600),
         tipo: "principal",
         alt: producto.nombre,
         descripcion: "Vista del producto",
       });
     }
 
-    // Imagen nutricional optimizada
     if (producto.imagen_nutricional) {
       imagenes.push({
-        url: getImagenOptimizada(producto.imagen_nutricional, 500, 700), // ✅ Formato vertical para tabla nutricional
+        url: getImagenOptimizada(producto.imagen_nutricional, 500, 700),
         tipo: "nutricional",
         alt: `Información nutricional - ${producto.nombre}`,
         descripcion: "Información nutricional",
       });
     }
 
-    // Si no hay imágenes, agregar placeholder
     if (imagenes.length === 0) {
       imagenes.push({
-        url: getImagenUrl(null), // ✅ Esto devuelve el placeholder
+        url: getImagenUrl(null),
         tipo: "placeholder",
         alt: "Imagen no disponible",
         descripcion: "Imagen no disponible",
@@ -137,11 +154,7 @@ function ProductoDetalle({ tipo }) {
     return imagenes;
   };
 
-  // ✅ MANEJADORES DE ERRORES DE IMAGEN MEJORADOS
   const manejarErrorImagen = (tipoImagen, productoId) => {
-    console.error(
-      `Error cargando imagen ${tipoImagen} para producto ${productoId}`
-    );
     setErroresImagen((prev) => ({
       ...prev,
       [tipoImagen]: true,
@@ -180,6 +193,13 @@ function ProductoDetalle({ tipo }) {
   const agregarAlCarrito = async (e) => {
     e.preventDefault();
 
+    // ✅ BLOQUEO ADICIONAL DE SEGURIDAD
+    if (isAdmin) {
+      setMensaje("❌ Los administradores no pueden realizar compras.");
+      setTipoMensaje("error");
+      return;
+    }
+
     if (!producto) {
       setMensaje("❌ No hay producto para agregar");
       setTipoMensaje("error");
@@ -205,7 +225,6 @@ function ProductoDetalle({ tipo }) {
         tipo: tipo,
       };
 
-      // ✅ CORREGIDO: Usar la URL de la acción 'agregar'
       const response = await fetch(
         buildUrl(`${API_CONFIG.ENDPOINTS.CARRITO}agregar/`),
         {
@@ -267,7 +286,6 @@ function ProductoDetalle({ tipo }) {
 
   const getCamposProducto = () => {
     const campos = [];
-
     campos.push(
       <div className="detail-item" key="sabor">
         <span className="detail-label">Sabor/Tipo:</span>
@@ -276,7 +294,6 @@ function ProductoDetalle({ tipo }) {
         </span>
       </div>
     );
-
     if (tipo === "proteina" && producto.peso) {
       campos.push(
         <div className="detail-item" key="peso">
@@ -285,7 +302,6 @@ function ProductoDetalle({ tipo }) {
         </div>
       );
     }
-
     if (tipo === "proteina" && producto.tipo_proteina) {
       campos.push(
         <div className="detail-item" key="tipo-proteina">
@@ -294,7 +310,6 @@ function ProductoDetalle({ tipo }) {
         </div>
       );
     }
-
     campos.push(
       <div className="detail-item" key="vencimiento">
         <span className="detail-label">Vence:</span>
@@ -305,7 +320,6 @@ function ProductoDetalle({ tipo }) {
         </span>
       </div>
     );
-
     return campos;
   };
 
@@ -381,10 +395,8 @@ function ProductoDetalle({ tipo }) {
             <div className="product-detail-card">
               <form onSubmit={agregarAlCarrito} className="product-form">
                 <div className="row">
-                  {/* Columna de imágenes */}
                   <div className="col-md-5">
                     <div className="product-images-section">
-                      {/* Imagen principal grande */}
                       <div className="main-image-container text-center mb-4">
                         <div className="product-image-container">
                           {imagenActual?.url ? (
@@ -435,7 +447,6 @@ function ProductoDetalle({ tipo }) {
                           )}
                         </div>
 
-                        {/* Descripción de la imagen actual */}
                         <div className="image-description mt-2">
                           <small className="text-muted">
                             <i
@@ -450,7 +461,6 @@ function ProductoDetalle({ tipo }) {
                         </div>
                       </div>
 
-                      {/* Galería de miniaturas */}
                       {imagenes.length > 1 && (
                         <div className="image-gallery">
                           <h5 className="gallery-title">
@@ -471,19 +481,9 @@ function ProductoDetalle({ tipo }) {
                                   alt={imagen.alt}
                                   className="thumbnail-image"
                                   onError={(e) => {
-                                    console.error(
-                                      `Error cargando miniatura ${index}:`,
-                                      imagen.url
-                                    );
                                     e.target.src =
                                       "https://via.placeholder.com/100x100/4A5568/FFFFFF?text=Error";
                                   }}
-                                  onLoad={() =>
-                                    console.log(
-                                      `Miniatura ${index} cargada:`,
-                                      imagen.url
-                                    )
-                                  }
                                 />
                                 <div className="thumbnail-badge">
                                   {imagen.tipo === "principal" ? (
@@ -506,7 +506,6 @@ function ProductoDetalle({ tipo }) {
                     </div>
                   </div>
 
-                  {/* Información del producto */}
                   <div className="col-md-7">
                     <div className="product-info">
                       <div className="product-category-badge mb-2">
@@ -563,7 +562,7 @@ function ProductoDetalle({ tipo }) {
                                 type="button"
                                 className="quantity-btn"
                                 onClick={disminuirCantidad}
-                                disabled={cantidad <= 1}
+                                disabled={cantidad <= 1 || isAdmin} // Bloqueado si es Admin
                               >
                                 <i className="fas fa-minus"></i>
                               </button>
@@ -576,12 +575,13 @@ function ProductoDetalle({ tipo }) {
                                 max={producto.stock}
                                 onChange={manejarCambioCantidad}
                                 className="quantity-input"
+                                disabled={isAdmin} // Input bloqueado si es Admin
                               />
                               <button
                                 type="button"
                                 className="quantity-btn"
                                 onClick={aumentarCantidad}
-                                disabled={cantidad >= producto.stock}
+                                disabled={cantidad >= producto.stock || isAdmin} // Bloqueado si es Admin
                               >
                                 <i className="fas fa-plus"></i>
                               </button>
@@ -601,7 +601,21 @@ function ProductoDetalle({ tipo }) {
                       )}
 
                       <div className="product-actions">
-                        {enStock ? (
+                        {/* ✅ LÓGICA DE VISUALIZACIÓN DE BOTONES SEGÚN ROL */}
+                        {isAdmin ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary w-100 mb-3"
+                            disabled
+                            style={{
+                              cursor: "not-allowed",
+                              opacity: 0.7,
+                            }}
+                          >
+                            <i className="fas fa-user-shield me-2"></i>
+                            Administradores no pueden comprar
+                          </button>
+                        ) : enStock ? (
                           <button
                             type="submit"
                             className="btn btn-add-to-cart"
