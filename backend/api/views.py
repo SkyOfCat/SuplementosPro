@@ -898,11 +898,13 @@ class CrearPreferenciaMP(APIView):
                     #print(f"📸 Imagen final enviada a MP: {img_url}")
                 
                 items_mp.append(item_data)
-
+                
+                frontend_url = settings.FRONTEND_URL.rstrip('/')
+                
                 urls_retorno = {
-                "success": "https://localhost:5173/pago-exitoso",
-                "failure": "https://localhost:5173/pago-fallido",
-                "pending": "https://localhost:5173/pago-pendiente"
+                "success": f"{frontend_url}/pago-exitoso",
+                "failure": f"{frontend_url}/pago-fallido",
+                "pending": f"{frontend_url}/pago-pendiente"
                 }
 
                 preference_data = {
