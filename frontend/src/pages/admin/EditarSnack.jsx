@@ -200,7 +200,7 @@ const EditarSnack = () => {
       const response = await fetch(
         buildUrl(`${API_CONFIG.ENDPOINTS.SNACKS}${id}/`),
         {
-          method: "PUT",
+          method: "PATCH", //PUT necesita modificar todos los campos
           headers: getAuthHeadersFormData(),
           body: formDataToSend,
         }

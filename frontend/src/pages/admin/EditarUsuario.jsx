@@ -147,7 +147,7 @@ const EditarUsuario = () => {
       const response = await fetch(
         buildUrl(`${API_CONFIG.ENDPOINTS.USUARIOS}${id}/`),
         {
-          method: "PUT",
+          method: "PATCH", //PUT necesita todos los campos para modificar
           headers: getAuthHeadersJSON(),
           body: JSON.stringify(datosParaEnviar),
         }

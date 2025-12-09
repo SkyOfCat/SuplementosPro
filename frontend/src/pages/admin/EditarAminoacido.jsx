@@ -182,7 +182,7 @@ const EditarAminoacido = () => {
       const response = await fetch(
         buildUrl(`${API_CONFIG.ENDPOINTS.AMINOACIDOS}${id}/`),
         {
-          method: "PUT",
+          method: "PATCH", //PUT necesita todos los campos modificados
           headers: getAuthHeadersFormData(),
           body: data,
         }

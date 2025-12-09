@@ -184,7 +184,7 @@ const EditarCreatina = () => {
       const response = await fetch(
         buildUrl(`${API_CONFIG.ENDPOINTS.CREATINAS}${id}/`),
         {
-          method: "PUT",
+          method: "PATCH", //PUT es para reemplazar sin un campo faltante
           headers: getAuthHeadersFormData(),
           body: data,
         }

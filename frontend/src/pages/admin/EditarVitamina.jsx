@@ -182,7 +182,7 @@ const EditarVitamina = () => {
       const response = await fetch(
         buildUrl(`${API_CONFIG.ENDPOINTS.VITAMINAS}${id}/`),
         {
-          method: "PUT",
+          method: "PATCH", //PUT necesita que modifiques todos los datos
           headers: getAuthHeadersFormData(),
           body: data,
         }

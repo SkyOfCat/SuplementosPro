@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import Navbar from "../components/Navbar";
@@ -8,16 +8,6 @@ import "../styles/Footer.css";
 // --- CONFIGURACIÓN DE URL DEL BACKEND ---
 // IMPORTANTE: Reemplaza esta URL con la tuya de Render sin la barra al final
 const API_URL = "https://suplementospro.onrender.com";
-
-// Remover cualquier imagen de fondo del body
-document.body.style.backgroundImage = "none";
-document.body.style.background =
-  "linear-gradient(135deg, #aaaaaaff, #b3b3b3ff)";
-document.body.style.backgroundSize = "cover";
-document.body.style.backgroundAttachment = "fixed";
-document.body.style.minHeight = "100vh";
-document.body.style.margin = "0";
-document.body.style.padding = "0";
 
 // INICIALIZAR MERCADO PAGO (Pon tu Public Key aquí)
 initMercadoPago("APP_USR-1546c623-c220-4c67-9d10-48c3015a0156", {
@@ -68,6 +58,22 @@ function Pagar() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    document.body.style.backgroundImage = "none";
+    document.body.style.background =
+      "linear-gradient(135deg, #2127e6, #2127e6)";
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.minHeight = "100vh";
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    return () => {
+      document.body.style.background = "";
+      document.body.style.backgroundImage = "";
+      document.body.style.backgroundColor = "";
+    };
+  }, []);
 
   return (
     <div>
